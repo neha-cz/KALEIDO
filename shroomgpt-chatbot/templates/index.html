@@ -29,12 +29,24 @@
             <p class="sub">Take your AI on a trip.</p>
           </div>
         </div>
+        <div class="header-trip">
+          <p id="trip-status-compact" class="trip-status-compact" aria-live="polite">Trip off</p>
+          <button
+            type="button"
+            class="trip-toggle"
+            id="trip-toggle"
+            aria-expanded="false"
+            aria-controls="trip-drawer"
+          >
+            Trip
+          </button>
+        </div>
       </header>
 
       <section id="chat" class="glass panel-chat" aria-live="polite">
         <div class="messages" id="messages"></div>
         <p id="empty" class="empty-hint">
-          Ask ShroomGPT anything you want and watch it trip in real time. 
+          Ask ShroomGPT anything you want and watch it trip in real time.
         </p>
       </section>
 
@@ -57,6 +69,70 @@
         </form>
       </footer>
     </main>
+
+    <button type="button" class="trip-backdrop" id="trip-backdrop" hidden aria-hidden="true"></button>
+    <aside class="glass trip-drawer" id="trip-drawer" aria-label="Trip controls" aria-hidden="true">
+      <div class="trip-drawer-top">
+        <h2 class="trip-title">Trip</h2>
+        <button type="button" class="trip-close" id="trip-close" aria-label="Close trip panel">×</button>
+      </div>
+      <p id="trip-status" class="trip-status" aria-live="polite">Off — set dose &amp; schedule, then begin</p>
+      <div class="trip-grid">
+        <label class="trip-field">
+          <span class="trip-label">Dose <output id="dose-val" for="dose">70%</output></span>
+          <input type="range" id="dose" min="0" max="100" value="70" step="1" />
+          <span class="trip-hint">How far &beta; drops at onset (flattens the landscape)</span>
+        </label>
+        <label class="trip-field">
+          <span class="trip-label">Time step <output id="turn-step-val" for="turn-step">1.0</output></span>
+          <input type="range" id="turn-step" min="0.25" max="3" value="1" step="0.25" />
+          <span class="trip-hint">Trip time added per reply</span>
+        </label>
+        <label class="trip-field">
+          <span class="trip-label">Annealing schedule</span>
+          <select id="schedule" class="trip-select">
+            <option value="exponential" selected>Exponential (continuous geometric)</option>
+            <option value="logarithmic">Logarithmic (Geman &amp; Geman)</option>
+            <option value="linear">Linear</option>
+          </select>
+          <span class="trip-hint">How &beta; recovers to baseline after onset</span>
+        </label>
+        <label class="trip-field">
+          <span class="trip-label">Hierarchy power <output id="hierarchy-val" for="hierarchy">2.0</output></span>
+          <input type="range" id="hierarchy" min="0" max="5" value="2" step="0.25" />
+          <span class="trip-hint">How concentrated flattening is in late (high-level) layers</span>
+        </label>
+        <label class="trip-field" id="field-tau">
+          <span class="trip-label">Recovery &tau; <output id="tau-val" for="tau">6.0</output></span>
+          <input type="range" id="tau" min="1" max="20" value="6" step="0.5" />
+          <span class="trip-hint">Comedown time constant — larger = slower recovery</span>
+        </label>
+        <label class="trip-field" id="field-t-final" hidden>
+          <span class="trip-label">Recover by t<sub>final</sub> <output id="t-final-val" for="t-final">12</output></span>
+          <input type="range" id="t-final" min="2" max="40" value="12" step="1" />
+          <span class="trip-hint">&beta; fully recovered at this time (linear)</span>
+        </label>
+        <label class="trip-field trip-field-toggle">
+          <span class="trip-label">Couple sampling temperature</span>
+          <span class="trip-switch">
+            <input type="checkbox" id="couple-sampling" checked />
+            <span class="trip-switch-track" aria-hidden="true"></span>
+          </span>
+          <span class="trip-hint">Anneal the output sampler alongside the landscape</span>
+        </label>
+        <label class="trip-field" id="field-sampling-hot">
+          <span class="trip-label">Sampling T peak <output id="sampling-hot-val" for="sampling-hot">1.6</output></span>
+          <input type="range" id="sampling-hot" min="1" max="3" value="1.6" step="0.1" />
+          <span class="trip-hint">Peak multiplier on sampling temp at onset</span>
+        </label>
+      </div>
+      <div class="trip-actions">
+        <button type="button" class="trip-btn trip-btn-primary" id="trip-start">Begin trip</button>
+        <button type="button" class="trip-btn" id="trip-advance" disabled>+ time</button>
+        <button type="button" class="trip-btn trip-btn-ghost" id="trip-stop" disabled>End trip</button>
+      </div>
+    </aside>
+
     <script src="{{ url_for('static', filename='chat.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='fx.js') }}"></script>
   </body>
