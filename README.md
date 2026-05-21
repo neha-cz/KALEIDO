@@ -1,6 +1,6 @@
 # ShroomGPT
 
-Simulating psychedelic effects in LLM inference using general relativity-inspired ODEs for activation steering and fine-tuned LoRA models.
+Simulating psychedelic effects in LLM inference using REBUS-inspired ODEs for attention sharpness under the modern Hopfield-network interpretation.
 
 ![Hero](hero-final.png)
 ![Shroom](final-shroom.png)
