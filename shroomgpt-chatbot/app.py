@@ -63,6 +63,8 @@ from flask import Flask, jsonify, render_template, request, send_from_directory
 from flask_cors import CORS
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+from noumadelic_prompt_engineering import build_trip_chat_messages, sanitize_generated_text
+
 app = Flask(__name__, static_folder="static", template_folder="templates")
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
@@ -73,6 +75,24 @@ HF_MODEL = os.environ.get("HF_MODEL", "meta-llama/Llama-3.2-1B-Instruct")
 TRIP_DEBUG = os.environ.get("TRIP_DEBUG", "0") == "1"
 
 VALID_SCHEDULES = ("exponential", "logarithmic", "linear")
+
+# Fixed trip profile (UI only exposes begin / +time / end).
+TRIP_PRESET = {
+    "dose": 1.0,
+    "schedule": "exponential",
+    "tau": 6.0,
+    "t_final": 12.0,
+    "hierarchy_power": 2.0,
+    "initial_t": 1.0,
+    "turn_step": 0.25,
+    "couple_sampling": True,
+    "sampling_T_hot": 1.6,
+}
+
+# Generation length: ~220 words ≈ 300–350 tokens; cap leaves headroom so replies
+# finish naturally instead of mid-sentence truncation.
+DEFAULT_MAX_NEW_TOKENS = 512
+MAX_NEW_TOKENS_CAP = 1024
 
 # Floor on β(t,ℓ)/β₀. β=0 makes the landscape perfectly flat (uniform attention,
 # every memory equally metastable) which produces incoherent output. Keep the
@@ -113,15 +133,17 @@ class BetaTripState:
 
     def __init__(self):
         self.active = False            # is a trip currently happening?
-        self.dose = 0.0                # ∈ [0,1]; onset depth (1 ⇒ β→β₀(1−w) at t=0)
-        self.t = 0.0                   # current time in the trip (in turns)
-        self.schedule = "exponential"  # one of VALID_SCHEDULES
-        self.tau = 6.0                 # recovery time constant (exponential comedown)
-        self.t_final = 12.0            # turns until fully cool (linear schedule)
-        self.hierarchy_power = 2.0     # how concentrated flattening is in late layers
-        self.turn_step = 1.0           # how much t advances per assistant turn
-        self.couple_sampling = True    # also anneal the token-sampling temperature?
-        self.sampling_T_hot = 1.6      # peak multiplier on sampling temp at onset
+        self.dose = TRIP_PRESET["dose"]
+        self.t = 0.0
+        self.schedule = TRIP_PRESET["schedule"]
+        self.tau = TRIP_PRESET["tau"]
+        self.t_final = TRIP_PRESET["t_final"]
+        self.hierarchy_power = TRIP_PRESET["hierarchy_power"]
+        self.turn_step = TRIP_PRESET["turn_step"]
+        self.couple_sampling = TRIP_PRESET["couple_sampling"]
+        self.sampling_T_hot = TRIP_PRESET["sampling_T_hot"]
+        self.annealing = True           # REBUS β patch + coupled sampling temp
+        self.prompt_engineering = True  # LSD+shrooms system prompt
         self.n_layers = 0              # set after model loads
 
     # --------------------------------------------------------
@@ -159,7 +181,7 @@ class BetaTripState:
         ratio = 1 − dose · w(ℓ) · decay(t), floored at BETA_RATIO_FLOOR.
         1.0 ⇒ sober (untouched); → floor ⇒ maximally flat landscape (peak trip).
         """
-        if not self.active:
+        if not self.active or not self.annealing:
             return 1.0
         suppression = self.dose * self.layer_weight(layer_idx, n_layers) * self.decay()
         return max(BETA_RATIO_FLOOR, 1.0 - suppression)
@@ -168,9 +190,9 @@ class BetaTripState:
         """Multiplier on the request's sampling temperature, annealed on the
         SAME decay so the output sampler 'explores' alongside the flattened
         energy landscape. 1.0 at sobriety, up to sampling_T_hot at onset.
-        Returns 1.0 if coupling disabled or trip inactive.
+        Returns 1.0 if coupling disabled, annealing off, or trip inactive.
         """
-        if not self.active or not self.couple_sampling:
+        if not self.active or not self.annealing or not self.couple_sampling:
             return 1.0
         return 1.0 + self.dose * self.decay() * (self.sampling_T_hot - 1.0)
 
@@ -185,7 +207,8 @@ class BetaTripState:
         tau: float = 6.0,
         t_final: float = 12.0,
         hierarchy_power: float = 2.0,
-        turn_step: float = 1.0,
+        turn_step: float = 0.25,
+        initial_t: float = 1.0,
         couple_sampling: bool = True,
         sampling_T_hot: float = 1.6,
     ):
@@ -198,7 +221,7 @@ class BetaTripState:
         self.turn_step = max(0.01, turn_step)
         self.couple_sampling = bool(couple_sampling)
         self.sampling_T_hot = max(1.0, sampling_T_hot)
-        self.t = 0.0
+        self.t = max(0.0, initial_t)
 
     def configure(
         self,
@@ -210,6 +233,8 @@ class BetaTripState:
         turn_step: float | None = None,
         couple_sampling: bool | None = None,
         sampling_T_hot: float | None = None,
+        prompt_engineering: bool | None = None,
+        annealing: bool | None = None,
     ):
         if dose is not None:
             self.dose = max(0.0, min(1.0, dose))
@@ -227,6 +252,10 @@ class BetaTripState:
             self.couple_sampling = bool(couple_sampling)
         if sampling_T_hot is not None:
             self.sampling_T_hot = max(1.0, sampling_T_hot)
+        if prompt_engineering is not None:
+            self.prompt_engineering = bool(prompt_engineering)
+        if annealing is not None:
+            self.annealing = bool(annealing)
 
     def stop(self):
         self.active = False
@@ -245,7 +274,9 @@ class BetaTripState:
             "turn_step": self.turn_step,
             "couple_sampling": self.couple_sampling,
             "sampling_T_hot": self.sampling_T_hot,
-            "decay_now": self.decay(),
+            "prompt_engineering": self.prompt_engineering,
+            "annealing": self.annealing,
+            "decay_now": self.decay() if self.annealing else 0.0,
             "sampling_T_mult_now": self.sampling_temperature_multiplier(),
         }
 
@@ -353,7 +384,32 @@ print(f"[load] Ready. {N_LAYERS} layers on {DEVICE}.")
 # ============================================================
 # Generation helpers
 # ============================================================
+def _clamp_max_new_tokens(value: int) -> int:
+    try:
+        n = int(value)
+    except (TypeError, ValueError):
+        n = DEFAULT_MAX_NEW_TOKENS
+    return max(32, min(n, MAX_NEW_TOKENS_CAP))
+
+
+def _trim_incomplete_reply(text: str) -> str:
+    """If generation hit the token cap, drop a dangling final fragment."""
+    text = (text or "").strip()
+    if not text:
+        return text
+    if text[-1] in ".!?…":
+        return text
+    for sep in (". ", ".\n", "! ", "? ", '."', ".'"):
+        idx = text.rfind(sep)
+        if idx != -1:
+            return text[: idx + 1].strip()
+    return text
+
+
 def _build_messages(history: list, new_message: str) -> list:
+    """Build chat messages; optional trip system prompt (independent of β annealing)."""
+    if TRIP.prompt_engineering:
+        return build_trip_chat_messages(history, new_message)
     out = []
     for turn in history or []:
         role = turn.get("role")
@@ -384,6 +440,9 @@ def _generate(messages, max_new_tokens, temperature, top_p, seed):
         if eot is not None and eot != tokenizer.unk_token_id:
             eos_ids.append(eot)
 
+        input_len = inputs["input_ids"].shape[1]
+        max_new_tokens = _clamp_max_new_tokens(max_new_tokens)
+
         output_ids = model.generate(
             **inputs,
             max_new_tokens=max_new_tokens,
@@ -394,8 +453,13 @@ def _generate(messages, max_new_tokens, temperature, top_p, seed):
             pad_token_id=tokenizer.pad_token_id,
         )
 
-        new_tokens = output_ids[0, inputs["input_ids"].shape[1]:]
-        return tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+        new_tokens = output_ids[0, input_len:]
+        hit_token_cap = len(new_tokens) >= max_new_tokens
+        raw = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+        reply = sanitize_generated_text(raw)
+        if hit_token_cap:
+            reply = _trim_incomplete_reply(reply)
+        return reply
 
 
 def _per_layer_beta_ratio() -> list:
@@ -437,30 +501,36 @@ def health():
 
 @app.post("/api/trip/start")
 def trip_start():
-    """Begin a trip: β annealing back to baseline on a monotonic schedule.
+    """Begin a trip using the fixed TRIP_PRESET profile."""
+    TRIP.start(**TRIP_PRESET)
+    return jsonify({
+        "trip": TRIP.snapshot(),
+        "per_layer_beta_ratio": _per_layer_beta_ratio(),
+        "per_layer_temperature": _per_layer_temperature(),
+    })
 
-    POST {
-      "dose": 0.7,
-      "schedule": "exponential" | "logarithmic" | "linear",
-      "tau": 6,                 # exponential recovery time constant
-      "t_final": 12,            # linear only
-      "hierarchy_power": 2,
-      "turn_step": 1,
-      "couple_sampling": true,  # also anneal the token-sampling temperature
-      "sampling_T_hot": 1.6     # peak sampling-temp multiplier at onset
-    }
-    """
+
+@app.post("/api/trip/prompt_engineering")
+def trip_prompt_engineering():
+    """Enable/disable LSD+shrooms system prompt (independent of β annealing)."""
     data = request.get_json(silent=True) or {}
-    TRIP.start(
-        dose=float(data.get("dose", 0.7)),
-        schedule=str(data.get("schedule", "exponential")),
-        tau=float(data.get("tau", 6.0)),
-        t_final=float(data.get("t_final", 12.0)),
-        hierarchy_power=float(data.get("hierarchy_power", 2.0)),
-        turn_step=float(data.get("turn_step", 1.0)),
-        couple_sampling=bool(data.get("couple_sampling", True)),
-        sampling_T_hot=float(data.get("sampling_T_hot", 1.6)),
-    )
+    if "enabled" not in data:
+        return jsonify({"error": "enabled (boolean) is required"}), 400
+    TRIP.configure(prompt_engineering=bool(data["enabled"]))
+    return jsonify({
+        "trip": TRIP.snapshot(),
+        "per_layer_beta_ratio": _per_layer_beta_ratio(),
+        "per_layer_temperature": _per_layer_temperature(),
+    })
+
+
+@app.post("/api/trip/annealing")
+def trip_annealing():
+    """Enable/disable REBUS β annealing (independent of prompt engineering)."""
+    data = request.get_json(silent=True) or {}
+    if "enabled" not in data:
+        return jsonify({"error": "enabled (boolean) is required"}), 400
+    TRIP.configure(annealing=bool(data["enabled"]))
     return jsonify({
         "trip": TRIP.snapshot(),
         "per_layer_beta_ratio": _per_layer_beta_ratio(),
@@ -487,6 +557,10 @@ def trip_configure():
         sampling_T_hot=float(data["sampling_T_hot"])
         if "sampling_T_hot" in data
         else None,
+        prompt_engineering=bool(data["prompt_engineering"])
+        if "prompt_engineering" in data
+        else None,
+        annealing=bool(data["annealing"]) if "annealing" in data else None,
     )
     return jsonify({
         "trip": TRIP.snapshot(),
@@ -509,7 +583,7 @@ def trip_stop():
 def trip_advance():
     """Manually advance trip time, in case user wants to fast-forward the comedown."""
     data = request.get_json(silent=True) or {}
-    steps = float(data.get("steps", 1.0))
+    steps = float(data.get("steps", TRIP.turn_step))
     if TRIP.active:
         TRIP.t += steps
     return jsonify({
@@ -541,7 +615,9 @@ def chat():
 
     base_temperature = float(data.get("temperature", 0.8))
     top_p = float(data.get("top_p", 0.9))
-    max_new_tokens = int(data.get("max_new_tokens", 400))
+    max_new_tokens = _clamp_max_new_tokens(
+        data.get("max_new_tokens", DEFAULT_MAX_NEW_TOKENS)
+    )
     seed = data.get("seed")
     if seed is not None:
         try:

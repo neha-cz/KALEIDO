@@ -76,56 +76,26 @@
         <h2 class="trip-title">Trip</h2>
         <button type="button" class="trip-close" id="trip-close" aria-label="Close trip panel">×</button>
       </div>
-      <p id="trip-status" class="trip-status" aria-live="polite">Off — set dose &amp; schedule, then begin</p>
-      <div class="trip-grid">
-        <label class="trip-field">
-          <span class="trip-label">Dose <output id="dose-val" for="dose">70%</output></span>
-          <input type="range" id="dose" min="0" max="100" value="70" step="1" />
-          <span class="trip-hint">How far &beta; drops at onset (flattens the landscape)</span>
-        </label>
-        <label class="trip-field">
-          <span class="trip-label">Time step <output id="turn-step-val" for="turn-step">1.0</output></span>
-          <input type="range" id="turn-step" min="0.25" max="3" value="1" step="0.25" />
-          <span class="trip-hint">Trip time added per reply</span>
-        </label>
-        <label class="trip-field">
-          <span class="trip-label">Annealing schedule</span>
-          <select id="schedule" class="trip-select">
-            <option value="exponential" selected>Exponential (continuous geometric)</option>
-            <option value="logarithmic">Logarithmic (Geman &amp; Geman)</option>
-            <option value="linear">Linear</option>
-          </select>
-          <span class="trip-hint">How &beta; recovers to baseline after onset</span>
-        </label>
-        <label class="trip-field">
-          <span class="trip-label">Hierarchy power <output id="hierarchy-val" for="hierarchy">2.0</output></span>
-          <input type="range" id="hierarchy" min="0" max="5" value="2" step="0.25" />
-          <span class="trip-hint">How concentrated flattening is in late (high-level) layers</span>
-        </label>
-        <label class="trip-field" id="field-tau">
-          <span class="trip-label">Recovery &tau; <output id="tau-val" for="tau">6.0</output></span>
-          <input type="range" id="tau" min="1" max="20" value="6" step="0.5" />
-          <span class="trip-hint">Comedown time constant — larger = slower recovery</span>
-        </label>
-        <label class="trip-field" id="field-t-final" hidden>
-          <span class="trip-label">Recover by t<sub>final</sub> <output id="t-final-val" for="t-final">12</output></span>
-          <input type="range" id="t-final" min="2" max="40" value="12" step="1" />
-          <span class="trip-hint">&beta; fully recovered at this time (linear)</span>
-        </label>
-        <label class="trip-field trip-field-toggle">
-          <span class="trip-label">Couple sampling temperature</span>
-          <span class="trip-switch">
-            <input type="checkbox" id="couple-sampling" checked />
-            <span class="trip-switch-track" aria-hidden="true"></span>
-          </span>
-          <span class="trip-hint">Anneal the output sampler alongside the landscape</span>
-        </label>
-        <label class="trip-field" id="field-sampling-hot">
-          <span class="trip-label">Sampling T peak <output id="sampling-hot-val" for="sampling-hot">1.6</output></span>
-          <input type="range" id="sampling-hot" min="1" max="3" value="1.6" step="0.1" />
-          <span class="trip-hint">Peak multiplier on sampling temp at onset</span>
-        </label>
-      </div>
+      <p id="trip-status" class="trip-status" aria-live="polite">Off — begin when ready</p>
+      <p class="trip-preset-note">
+        β preset: 100% dose · exponential τ=6 · t₀=1 · step +0.25 · hierarchy 2.0 · t<sub>final</sub>=12 · samp T×1.6 coupled
+      </p>
+      <label class="trip-field trip-field-toggle">
+        <span class="trip-label">β annealing (REBUS)</span>
+        <span class="trip-switch">
+          <input type="checkbox" id="annealing" checked />
+          <span class="trip-switch-track" aria-hidden="true"></span>
+        </span>
+        <span class="trip-hint">Attention β schedule — use Begin trip for time progression</span>
+      </label>
+      <label class="trip-field trip-field-toggle">
+        <span class="trip-label">Prompt engineering (LSD + shrooms)</span>
+        <span class="trip-switch">
+          <input type="checkbox" id="prompt-engineering" checked />
+          <span class="trip-switch-track" aria-hidden="true"></span>
+        </span>
+        <span class="trip-hint">Trip system persona — works with or without Begin trip</span>
+      </label>
       <div class="trip-actions">
         <button type="button" class="trip-btn trip-btn-primary" id="trip-start">Begin trip</button>
         <button type="button" class="trip-btn" id="trip-advance" disabled>+ time</button>

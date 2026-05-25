@@ -14,26 +14,8 @@
   const tripStartBtn = document.getElementById("trip-start");
   const tripAdvanceBtn = document.getElementById("trip-advance");
   const tripStopBtn = document.getElementById("trip-stop");
-
-  const doseEl = document.getElementById("dose");
-  const turnStepEl = document.getElementById("turn-step");
-  const scheduleEl = document.getElementById("schedule");
-  const hierarchyEl = document.getElementById("hierarchy");
-  const tauEl = document.getElementById("tau");
-  const tFinalEl = document.getElementById("t-final");
-  const coupleSamplingEl = document.getElementById("couple-sampling");
-  const samplingHotEl = document.getElementById("sampling-hot");
-
-  const doseVal = document.getElementById("dose-val");
-  const turnStepVal = document.getElementById("turn-step-val");
-  const hierarchyVal = document.getElementById("hierarchy-val");
-  const tauVal = document.getElementById("tau-val");
-  const tFinalVal = document.getElementById("t-final-val");
-  const samplingHotVal = document.getElementById("sampling-hot-val");
-
-  const fieldTau = document.getElementById("field-tau");
-  const fieldTFinal = document.getElementById("field-t-final");
-  const fieldSamplingHot = document.getElementById("field-sampling-hot");
+  const annealingEl = document.getElementById("annealing");
+  const promptEngineeringEl = document.getElementById("prompt-engineering");
 
   let history = [];
   let tripActive = false;
@@ -57,43 +39,6 @@
     input.readOnly = on;
   }
 
-  // Show only the knobs the chosen schedule actually uses.
-  // τ drives the exponential recovery; t_final drives the linear schedule;
-  // logarithmic needs neither (it is parameter-free apart from dose/hierarchy).
-  function syncScheduleFields() {
-    const sched = scheduleEl.value;
-    if (fieldTau) fieldTau.hidden = sched !== "exponential";
-    if (fieldTFinal) fieldTFinal.hidden = sched !== "linear";
-  }
-
-  // Sampling-temp peak only matters when coupling is enabled.
-  function syncSamplingFields() {
-    if (fieldSamplingHot) fieldSamplingHot.hidden = !coupleSamplingEl.checked;
-  }
-
-  function tripParamsFromUI() {
-    return {
-      dose: Number(doseEl.value) / 100,
-      turn_step: Number(turnStepEl.value),
-      schedule: scheduleEl.value,
-      tau: Number(tauEl.value),
-      t_final: Number(tFinalEl.value),
-      hierarchy_power: Number(hierarchyEl.value),
-      couple_sampling: coupleSamplingEl.checked,
-      sampling_T_hot: Number(samplingHotEl.value),
-    };
-  }
-
-  function syncSliderLabels() {
-    doseVal.textContent = doseEl.value + "%";
-    turnStepVal.textContent = Number(turnStepEl.value).toFixed(2);
-    hierarchyVal.textContent = Number(hierarchyEl.value).toFixed(2);
-    tauVal.textContent = Number(tauEl.value).toFixed(1);
-    tFinalVal.textContent = String(Math.round(Number(tFinalEl.value)));
-    samplingHotVal.textContent = Number(samplingHotEl.value).toFixed(1);
-  }
-
-  // Describe the annealing schedule compactly for the status line.
   function scheduleSummary(trip) {
     if (!trip) return "";
     if (trip.schedule === "exponential") {
@@ -108,26 +53,39 @@
     return trip.schedule || "";
   }
 
-  // ratios is per_layer_beta_ratio (β/β₀ ∈ (0,1]); smaller = flatter landscape.
+  function modeHints(trip) {
+    if (!trip) return "";
+    const ann = trip.annealing ? "β on" : "β off";
+    const pe = trip.prompt_engineering ? "prompt on" : "prompt off";
+    return ` · ${ann} · ${pe}`;
+  }
+
   function formatTripStatus(trip, ratios) {
     if (!trip || !trip.active) {
-      return "Off — set dose & schedule, then begin";
+      return `Off — begin trip for β time${modeHints(trip)}`;
     }
-    const decay = typeof trip.decay_now === "number" ? trip.decay_now.toFixed(2) : "?";
+    const decay =
+      trip.annealing && typeof trip.decay_now === "number"
+        ? trip.decay_now.toFixed(2)
+        : "—";
     let betaHint = "";
-    if (Array.isArray(ratios) && ratios.length) {
+    if (trip.annealing && Array.isArray(ratios) && ratios.length) {
       const minR = Math.min(...ratios).toFixed(2);
       const maxR = Math.max(...ratios).toFixed(2);
       betaHint = ` · β/β₀ ${minR}–${maxR}`;
     }
     let sampHint = "";
-    if (trip.couple_sampling && typeof trip.sampling_T_mult_now === "number") {
+    if (
+      trip.annealing &&
+      trip.couple_sampling &&
+      typeof trip.sampling_T_mult_now === "number"
+    ) {
       sampHint = ` · sampT×${trip.sampling_T_mult_now.toFixed(2)}`;
     }
     const sched = scheduleSummary(trip);
     return `Active · ${sched} · t=${trip.t.toFixed(1)} · decay=${decay} · dose=${Math.round(
       trip.dose * 100
-    )}%${betaHint}${sampHint}`;
+    )}%${betaHint}${sampHint}${modeHints(trip)}`;
   }
 
   function formatTripStatusCompact(trip) {
@@ -149,27 +107,17 @@
 
   function applyTripUI(trip, ratios) {
     tripActive = Boolean(trip && trip.active);
-    const full = formatTripStatus(trip, ratios);
-    tripStatus.textContent = full;
+    tripStatus.textContent = formatTripStatus(trip, ratios);
     if (tripStatusCompact) tripStatusCompact.textContent = formatTripStatusCompact(trip);
     if (tripToggle) tripToggle.classList.toggle("is-active-trip", tripActive);
     tripStartBtn.disabled = tripActive;
     tripAdvanceBtn.disabled = !tripActive;
     tripStopBtn.disabled = !tripActive;
-    if (trip && trip.active) {
-      doseEl.value = String(Math.round(trip.dose * 100));
-      turnStepEl.value = String(trip.turn_step ?? turnStepEl.value);
-      if (trip.schedule) scheduleEl.value = trip.schedule;
-      hierarchyEl.value = String(trip.hierarchy_power ?? hierarchyEl.value);
-      tauEl.value = String(trip.tau ?? tauEl.value);
-      tFinalEl.value = String(trip.t_final ?? tFinalEl.value);
-      if (typeof trip.couple_sampling === "boolean") {
-        coupleSamplingEl.checked = trip.couple_sampling;
-      }
-      samplingHotEl.value = String(trip.sampling_T_hot ?? samplingHotEl.value);
-      syncScheduleFields();
-      syncSamplingFields();
-      syncSliderLabels();
+    if (annealingEl && trip && typeof trip.annealing === "boolean") {
+      annealingEl.checked = trip.annealing;
+    }
+    if (promptEngineeringEl && trip && typeof trip.prompt_engineering === "boolean") {
+      promptEngineeringEl.checked = trip.prompt_engineering;
     }
   }
 
@@ -197,46 +145,14 @@
     }
   }
 
-  // Slider/number inputs: relabel and (if active) push live config.
-  [doseEl, turnStepEl, hierarchyEl, tauEl, tFinalEl, samplingHotEl].forEach((el) => {
-    el.addEventListener("input", () => {
-      syncSliderLabels();
-      if (tripActive) {
-        tripRequest("/api/trip/configure", tripParamsFromUI()).catch((err) => {
-          tripStatus.textContent = err.message || String(err);
-        });
-      }
-    });
-  });
-
-  // Sampling-coupling checkbox: toggle the peak field, then push config.
-  coupleSamplingEl.addEventListener("change", () => {
-    syncSamplingFields();
-    if (tripActive) {
-      tripRequest("/api/trip/configure", tripParamsFromUI()).catch((err) => {
-        tripStatus.textContent = err.message || String(err);
-      });
-    }
-  });
-
-  // Schedule dropdown: toggle which knobs are visible, then push config.
-  scheduleEl.addEventListener("change", () => {
-    syncScheduleFields();
-    if (tripActive) {
-      tripRequest("/api/trip/configure", tripParamsFromUI()).catch((err) => {
-        tripStatus.textContent = err.message || String(err);
-      });
-    }
-  });
-
   tripStartBtn.addEventListener("click", () => {
-    tripRequest("/api/trip/start", tripParamsFromUI()).catch((err) => {
+    tripRequest("/api/trip/start").catch((err) => {
       tripStatus.textContent = err.message || String(err);
     });
   });
 
   tripAdvanceBtn.addEventListener("click", () => {
-    tripRequest("/api/trip/advance", { steps: Number(turnStepEl.value) }).catch((err) => {
+    tripRequest("/api/trip/advance").catch((err) => {
       tripStatus.textContent = err.message || String(err);
     });
   });
@@ -246,6 +162,26 @@
       tripStatus.textContent = err.message || String(err);
     });
   });
+
+  if (annealingEl) {
+    annealingEl.addEventListener("change", () => {
+      tripRequest("/api/trip/annealing", { enabled: annealingEl.checked }).catch((err) => {
+        tripStatus.textContent = err.message || String(err);
+        annealingEl.checked = !annealingEl.checked;
+      });
+    });
+  }
+
+  if (promptEngineeringEl) {
+    promptEngineeringEl.addEventListener("change", () => {
+      tripRequest("/api/trip/prompt_engineering", {
+        enabled: promptEngineeringEl.checked,
+      }).catch((err) => {
+        tripStatus.textContent = err.message || String(err);
+        promptEngineeringEl.checked = !promptEngineeringEl.checked;
+      });
+    });
+  }
 
   if (tripToggle) {
     tripToggle.addEventListener("click", () => {
@@ -258,9 +194,6 @@
     if (e.key === "Escape") setTripDrawer(false);
   });
 
-  syncScheduleFields();
-  syncSamplingFields();
-  syncSliderLabels();
   refreshTripState();
 
   form.addEventListener("submit", async (e) => {
