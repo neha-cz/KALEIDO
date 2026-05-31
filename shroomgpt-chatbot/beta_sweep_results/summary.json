@@ -1,0 +1,44 @@
+{
+  "model": "meta-llama/Llama-3.2-1B-Instruct",
+  "n_layers": 16,
+  "num_prompts": 24,
+  "layer_beta_ratio": 0.35,
+  "baseline": {
+    "condition": "baseline",
+    "beta_ratio": 1.0,
+    "layers": "all",
+    "accuracy": 0.75,
+    "accuracy_sd": 0.44232586846469135,
+    "semantic_drift": 0.4044076129794121,
+    "semantic_drift_sd": 0.04166227534744551,
+    "attention_entropy": 0.31243055243976414,
+    "attention_entropy_sd": 0.0029807314392466906,
+    "coherence_proxy": 1.0,
+    "n": 24
+  },
+  "strange_layers": [],
+  "beta_sweep_layers": [
+    9,
+    3,
+    8,
+    10
+  ],
+  "beta_star_analysis": {
+    "beta_star": 0.8,
+    "phase_transition_like": true,
+    "largest_adjacent_accuracy_drop": 0.4166666666666667,
+    "total_accuracy_drop": 0.75,
+    "drop_interval": [
+      1.0,
+      0.8
+    ],
+    "interpretation": "largest discrete accuracy cliff in the measured grid"
+  },
+  "files": {
+    "prompts": "prompts.jsonl",
+    "per_prompt_results": "per_prompt_results.csv",
+    "per_layer_attention_entropy": "per_layer_attention_entropy.csv",
+    "layer_summary": "layer_summary.csv",
+    "beta_summary": "beta_summary.csv"
+  }
+}

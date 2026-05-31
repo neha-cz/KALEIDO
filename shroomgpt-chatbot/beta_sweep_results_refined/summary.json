@@ -1,0 +1,97 @@
+{
+  "model": "meta-llama/Llama-3.2-1B-Instruct",
+  "n_layers": 16,
+  "num_prompts": 100,
+  "layer_beta_ratio": 0.35,
+  "baseline": {
+    "condition": "baseline",
+    "beta_ratio": 1.0,
+    "layers": "all",
+    "accuracy": 0.7,
+    "accuracy_sd": 0.4605661864718383,
+    "semantic_drift": 0.4103777718544006,
+    "semantic_drift_sd": 0.0529007647636178,
+    "attention_entropy": 0.31213166874833403,
+    "attention_entropy_sd": 0.003015233657179376,
+    "coherence_proxy": 1.0,
+    "n": 100
+  },
+  "strange_layers": [],
+  "beta_sweep_layers": [
+    3,
+    9,
+    5,
+    8
+  ],
+  "demo_layers": [
+    8,
+    9,
+    5
+  ],
+  "demo_layer_top_k": 3,
+  "demo_layer_selection_note": "demo_layers are a high-trippy-score subset of beta_sweep_layers; use beta just above beta_star for the demo",
+  "beta_values_measured": [
+    1.0,
+    0.83,
+    0.8125,
+    0.8,
+    0.795,
+    0.7775,
+    0.76,
+    0.7425,
+    0.725,
+    0.7075,
+    0.69,
+    0.6725,
+    0.655,
+    0.65,
+    0.6375,
+    0.62,
+    0.5,
+    0.4,
+    0.32,
+    0.25,
+    0.18,
+    0.12,
+    0.08
+  ],
+  "beta_refinement_added": [
+    0.83,
+    0.8125,
+    0.795,
+    0.7775,
+    0.76,
+    0.7425,
+    0.725,
+    0.7075,
+    0.69,
+    0.6725,
+    0.655,
+    0.6375,
+    0.62
+  ],
+  "beta_star_analysis": {
+    "beta_star": 0.80625,
+    "beta_star_interval": [
+      0.8125,
+      0.8
+    ],
+    "phase_transition_like": false,
+    "largest_adjacent_accuracy_drop": 0.25999999999999995,
+    "largest_accuracy_slope": 7.200000000000023,
+    "total_accuracy_drop": 0.7,
+    "drop_interval": [
+      0.8125,
+      0.8
+    ],
+    "interpretation": "no strong cliff by the default heuristic; inspect plots or use a denser beta grid"
+  },
+  "files": {
+    "prompts": "prompts.jsonl",
+    "per_prompt_results": "per_prompt_results.csv",
+    "per_layer_attention_entropy": "per_layer_attention_entropy.csv",
+    "layer_summary": "layer_summary.csv",
+    "demo_layer_summary": "demo_layer_summary.csv",
+    "beta_summary": "beta_summary.csv"
+  }
+}

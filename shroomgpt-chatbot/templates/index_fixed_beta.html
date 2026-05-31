@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ShroomGPT — Fixed β Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600&family=Syne:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="scene-photo" aria-hidden="true"></div>
+    <div class="scene-veil" aria-hidden="true"></div>
+
+    <main class="shell">
+      <header class="glass panel-header">
+        <div class="brand">
+          <img
+            class="orb"
+            src="{{ url_for('static', filename='shroom-logo.png') }}"
+            alt="ShroomGPT logo"
+          />
+          <div>
+            <h1>ShroomGPT</h1>
+            <p class="sub">Fixed β demo · layers &amp; ratio set in code</p>
+          </div>
+        </div>
+        <div class="header-trip header-trip--demo">
+          <p id="demo-status" class="trip-status-compact" aria-live="polite">Loading…</p>
+          <label class="trip-field trip-field-toggle trip-field-toggle--inline">
+            <span class="trip-label">Prompt</span>
+            <span class="trip-switch">
+              <input type="checkbox" id="prompt-engineering" checked />
+              <span class="trip-switch-track" aria-hidden="true"></span>
+            </span>
+          </label>
+        </div>
+      </header>
+
+      <section id="chat" class="glass panel-chat" aria-live="polite">
+        <div class="messages" id="messages"></div>
+        <p id="empty" class="empty-hint">
+          Fixed inverse-temperature on demo layers is always on. Toggle prompt for LSD+shrooms persona.
+        </p>
+      </section>
+
+      <footer class="glass panel-input">
+        <form id="form" class="input-row" autocomplete="off">
+          <label for="user-input" class="visually-hidden">Message</label>
+          <div class="input-glass">
+            <textarea
+              id="user-input"
+              name="message"
+              rows="1"
+              placeholder="Type a message…"
+              required
+            ></textarea>
+          </div>
+          <button type="submit" class="send" id="send" aria-label="Send">
+            <span class="send-text">Send</span>
+            <span class="send-ripple" aria-hidden="true"></span>
+          </button>
+        </form>
+      </footer>
+    </main>
+
+    <script src="{{ url_for('static', filename='chat_fixed_beta.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='fx.js') }}"></script>
+  </body>
+</html>

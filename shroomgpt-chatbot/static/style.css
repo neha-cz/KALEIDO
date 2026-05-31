@@ -109,6 +109,21 @@ body {
   flex-shrink: 0;
 }
 
+.header-trip--demo {
+  gap: 0.65rem;
+}
+
+.trip-field-toggle--inline {
+  margin-bottom: 0;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 0.45rem;
+}
+
+.trip-field-toggle--inline .trip-hint {
+  display: none;
+}
+
 .trip-status-compact {
   margin: 0;
   font-family: "Syne", "Space Grotesk", system-ui, sans-serif;

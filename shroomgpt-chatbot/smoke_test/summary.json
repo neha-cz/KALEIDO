@@ -1,0 +1,57 @@
+{
+  "model": "meta-llama/Llama-3.2-1B-Instruct",
+  "n_layers": 16,
+  "num_prompts": 6,
+  "gen_tokens": 64,
+  "samples_per_prompt": 3,
+  "layer_beta_ratio": 0.35,
+  "patch_calls": {
+    "total": 19232,
+    "intervened": 4737
+  },
+  "baseline": {
+    "condition": "baseline",
+    "local_coherence": 1.0,
+    "local_coherence_sd": 0.0,
+    "associative_drift": 0.23243841528892517,
+    "associative_drift_sd": 0.015124864698860204,
+    "self_diversity": 0.7626167728087623,
+    "global_coherence": 0.7881252351734372,
+    "attention_entropy": 0.29738576663658023,
+    "perplexity": 5.0592238753185415,
+    "degenerate": 0.0,
+    "n": 6
+  },
+  "strange_layers": [],
+  "beta_sweep_layers": "all",
+  "interesting_band": {
+    "band_beta_values": [
+      0.5
+    ],
+    "sweet_spot_beta": 0.5,
+    "collapse_beta": 0.3,
+    "baseline_drift": 0.23243841528892517,
+    "baseline_local_coherence": 1.0,
+    "found_band": true,
+    "interpretation": "altered-but-coherent band found: drift elevated while local coherence held"
+  },
+  "beta_vs_temperature_control": {
+    "comparable": false,
+    "reason": "missing one of the two arms"
+  },
+  "metric_notes": {
+    "local_coherence": "clean-model perplexity-derived; higher = more grammatical/local well-formedness",
+    "associative_drift": "1 - cos(prompt, output) under clean model; higher = wanders further",
+    "self_diversity": "type-token ratio over first 120 tokens",
+    "global_coherence": "mean consecutive-sentence cosine similarity; LOW = floaty/disconnected",
+    "signature": "psychedelic-analog = drift/diversity up + local_coherence held + global_coherence down"
+  },
+  "files": {
+    "prompts": "prompts.jsonl",
+    "per_generation_results": "per_generation_results.csv",
+    "per_layer_attention_entropy": "per_layer_attention_entropy.csv",
+    "layer_summary": null,
+    "beta_summary": "beta_summary.csv",
+    "temp_summary": null
+  }
+}
