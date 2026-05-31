@@ -50,8 +50,7 @@ from flask import Flask, jsonify, render_template, request, send_from_directory
 from flask_cors import CORS
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from noumadelic_prompt_engineering import sanitize_generated_text
-# from noumadelic_prompt_engineering import build_trip_chat_messages  # disabled: β-only mode
+from noumadelic_prompt_engineering import build_trip_chat_messages, sanitize_generated_text
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -64,10 +63,10 @@ TRIP_DEBUG = os.environ.get("TRIP_DEBUG", "0") == "1"
 
 # Measured from the β/layer sweep.
 BETA_STAR = float(os.environ.get("BETA_STAR", "0.80625"))
-DEMO_BETA_RATIO = float(os.environ.get("DEMO_BETA_RATIO", "0.22"))
+DEMO_BETA_RATIO = float(os.environ.get("DEMO_BETA_RATIO", "0.40"))
 DEMO_LAYERS = tuple(
     int(x.strip())
-    for x in os.environ.get("DEMO_LAYERS", "8,9,5").split(",")
+    for x in os.environ.get("DEMO_LAYERS", "2,3").split(",")
     if x.strip()
 )
 
@@ -76,7 +75,7 @@ DEMO_LAYERS = tuple(
 TRIP_PRESET = {
     "demo_beta_ratio": DEMO_BETA_RATIO,
     "demo_layers": DEMO_LAYERS,
-    "prompt_engineering": False,  # disabled: explore fixed β patch without system prompt
+    "prompt_engineering": True,
     "beta_patch": True,
 }
 
@@ -121,7 +120,7 @@ class BetaTripState:
     def __init__(self):
         self.active = False
         self.beta_patch = True
-        self.prompt_engineering = False  # disabled: β-only mode
+        self.prompt_engineering = True  # LSD+shrooms system prompt
         self.demo_beta_ratio = max(BETA_RATIO_FLOOR, min(1.0, DEMO_BETA_RATIO))
         self.demo_layers = tuple(DEMO_LAYERS)
         self.beta_star = BETA_STAR
@@ -330,9 +329,9 @@ def _trim_incomplete_reply(text: str) -> str:
 
 
 def _build_messages(history: list, new_message: str) -> list:
-    """Plain chat messages only — no trip system prompt (β-only exploration)."""
-    # if TRIP.prompt_engineering:
-    #     return build_trip_chat_messages(history, new_message)
+    """Build chat messages; optional trip system prompt (independent of β patch)."""
+    if TRIP.prompt_engineering:
+        return build_trip_chat_messages(history, new_message)
     out = []
     for turn in history or []:
         role = turn.get("role")
@@ -437,7 +436,7 @@ def trip_start():
 
 @app.post("/api/trip/prompt_engineering")
 def trip_prompt_engineering():
-    """Enable/disable LSD+shrooms system prompt (independent of β annealing)."""
+    """Enable/disable LSD+shrooms system prompt (independent of β patch)."""
     data = request.get_json(silent=True) or {}
     if "enabled" not in data:
         return jsonify({"error": "enabled (boolean) is required"}), 400
