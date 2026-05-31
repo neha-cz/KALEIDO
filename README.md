@@ -6,4 +6,4 @@ Simulating psychedelic effects in LLM inference using REBUS-inspired ODEs for at
 
 ## Mech Interp findings
 
-All-layer attention inverse-temperature flattening in Llama-3.2-1B produces large associative drift while preserving local grammaticality — a more "coherent-but-loosened" profile than sampling temperature — but it does so without measurably flattening attention entropy and without being statistically separable from temperature on the intended discriminators. 
+Attention inverse-temperature flattening of early layers in Llama-3.2-1B substantially blurs those layers' attention and rewrites their value-blended outputs, and — the dominant effect — this perturbation propagates through the residual stream to rewrite the outputs of all downstream layers, which is what degrades coherence. The mechanism is depth-propagation of an early-layer disturbance, not a localized temperature effect.
