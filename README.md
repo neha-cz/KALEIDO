@@ -1,6 +1,6 @@
 # ShroomGPT
 
-Simulating psychedelic effects in LLM inference using REBUS-inspired ODEs for attention sharpness under the modern Hopfield-network interpretation. Future work will explore mechanistic intrepretability techniques, such as graded ablation, to determine if flattening the energy landscape via the inverse temperature will follow a phase-transition. We will formally define a critial point where reasoning is most meaningfully impacted, quantitatively measured by semantic drift and attention entropy. 
+Probing psychedelic-like effects in LLM inference by flattening attention sharpness via the inverse temperature, motivated by the modern Hopfield-network interpretation and the entropic brain hypothesis. Using graded ablation and mechanistic interpretability, we find that flattening early layers blurs their attention but loosens reasoning chiefly through depth-propagation of the perturbation along the residual stream, not a localized temperature effect or a clean energy-landscape phase transition. Rather than a sharp critical point, we observe a graded altered-but-coherent band, quantified by semantic drift, attention entropy, and per-layer output shift. The bottom-up cascade reproduces the entropic-brain signature which posits top-down relaxation of high-level priors.
 
 ![Shroom Forest](shroom-forest-mech-interp.png)
 
