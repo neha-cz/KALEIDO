@@ -1,7 +1,5 @@
 # KALEIDO
 
-*A language model with the dial turned past sharp.*
-
 KALEIDO is a chat interface that runs on a single knob from inside the
 transformer's attention mechanism — its inverse "temperature," β. Turn β down and
 the model's attention spreads instead of sharpening; its replies drift toward the
