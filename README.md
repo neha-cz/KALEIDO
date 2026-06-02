@@ -11,8 +11,6 @@ Lowering β raises the model's attention entropy — and elevated neural entropy
 *signatures* of the psychedelic state in the brain under the Entropic Brain Hypothesis. KALEIDO reproduces that marker inside a
 transformer. 
 
-![Demo 1](kaleido_demo_1.png)
-![Demo 2](kaleido_demo_2.png)
 ![Demo 3](kaleido_demo_3.png)
 
 ## Try it
