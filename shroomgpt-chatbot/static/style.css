@@ -1,17 +1,30 @@
 /* Liquid glass + glassmorphism */
 :root {
-  /* Slightly stronger frost so UI stays legible on a vivid illustrated BG */
-  --glass-bg: rgba(255, 255, 255, 0.11);
-  --glass-border: rgba(255, 255, 255, 0.28);
-  --glass-shine: rgba(255, 255, 255, 0.5);
-  --text: #f0f4ff;
-  --text-muted: rgba(240, 244, 255, 0.6);
-  --user-bubble: rgba(120, 200, 255, 0.2);
-  --bot-bubble: rgba(255, 255, 255, 0.06);
+  /* Clear glass + Shopify Editions–style text on vivid art */
+  --text-cream: #f7f7ee;
+  --text-cream-muted: rgba(247, 247, 238, 0.8);
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.38);
+  --glass-shine: rgba(255, 255, 255, 0.65);
+  --glass-edge: rgba(255, 255, 255, 0.12);
+  --text: var(--text-cream);
+  --text-muted: var(--text-cream-muted);
+  --user-bubble: rgba(255, 255, 255, 0.1);
+  --bot-bubble: rgba(255, 255, 255, 0.07);
   --accent: #7ee8fa;
   --accent-2: #6b8cff;
   --radius: 1.25rem;
   --font: "Instrument Serif", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-ui: "Syne", "Space Grotesk", system-ui, sans-serif;
+  /* Stacked halo — text reads on any pixel behind clear glass */
+  --text-halo:
+    0 0 1px rgba(0, 0, 0, 0.92),
+    0 1px 2px rgba(0, 0, 0, 0.78),
+    0 2px 10px rgba(0, 0, 0, 0.58),
+    0 0 28px rgba(0, 0, 0, 0.4);
+  --text-halo-soft:
+    0 0 1px rgba(0, 0, 0, 0.8),
+    0 1px 3px rgba(0, 0, 0, 0.55);
 }
 
 *,
@@ -38,57 +51,100 @@ body {
   padding: clamp(0.75rem, 2vw, 1.5rem);
 }
 
-/* Full-bleed art background (served from /static/shroom-wallpaper.jpg) */
+/* Full-bleed art background (served from /static/cirlce-circus-2.jpg) */
 .scene-photo {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   background-color: #1a1208;
-  background-image: url("planets.jpg");
+  background-image: url("cirlce-circus-2.jpg");
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
   background-attachment: fixed;
 }
 
-/* Vignette + light tone map so glass picks up color from the art */
+/* Soft vignette — slight dim so art + glass text stay balanced */
 .scene-veil {
   position: fixed;
   inset: 0;
   z-index: 1;
   pointer-events: none;
   background: radial-gradient(
-      ellipse 95% 85% at 50% 45%,
-      rgba(6, 4, 18, 0.08) 0%,
-      rgba(6, 4, 18, 0.45) 100%
+      ellipse 100% 90% at 50% 48%,
+      rgba(6, 4, 18, 0.28) 0%,
+      rgba(6, 4, 18, 0.56) 100%
     ),
     linear-gradient(
       180deg,
-      rgba(4, 6, 20, 0.35) 0%,
-      transparent 28%,
-      transparent 72%,
-      rgba(4, 6, 22, 0.55) 100%
+      rgba(4, 6, 20, 0.52) 0%,
+      rgba(4, 6, 20, 0.2) 30%,
+      rgba(4, 6, 20, 0.2) 70%,
+      rgba(4, 6, 22, 0.6) 100%
     );
 }
 
-/* Glass surface */
+/* Shopify-style: warm cream type with stacked halo on illustrated backgrounds */
+.type-on-glass,
+.glass :is(h1, h2, h3, p, label, span, .bubble, .empty-hint, .trip-status-compact, .trip-label) {
+  color: var(--text-cream);
+  text-shadow: var(--text-halo);
+  -webkit-font-smoothing: antialiased;
+}
+
+.glass .sub,
+.glass .empty-hint,
+.glass .trip-status-compact,
+.glass .trip-label {
+  color: var(--text-cream-muted);
+  text-shadow: var(--text-halo-soft);
+}
+
+/* Glass surface — clear liquid glass (no frost/blur) */
 .glass {
   position: relative;
-  background: var(--glass-bg);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.04) 48%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
   border: 1px solid var(--glass-border);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 0 var(--glass-shine);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 0 var(--glass-shine),
+    inset 0 -1px 0 0 var(--glass-edge);
   border-radius: var(--radius);
+  z-index: 1;
+  overflow: hidden;
+}
+
+/* Specular highlight — liquid shine */
+.glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.38) 0%,
+    rgba(255, 255, 255, 0.08) 28%,
+    transparent 52%
+  );
+}
+
+.glass > * {
+  position: relative;
   z-index: 1;
 }
 
 .shell {
   position: relative;
   width: min(100%, 760px);
-  max-height: min(94vh, 780px);
+  max-height: 94vh;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -126,9 +182,9 @@ body {
 
 .trip-status-compact {
   margin: 0;
-  font-family: "Syne", "Space Grotesk", system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 0.82rem;
-  color: var(--text-muted);
+  font-weight: 500;
   max-width: 9rem;
   white-space: nowrap;
   overflow: hidden;
@@ -166,8 +222,6 @@ body {
   padding: 0;
   margin: 0;
   background: rgba(4, 6, 18, 0.55);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
   cursor: pointer;
 }
 
@@ -409,6 +463,20 @@ body {
   flex-shrink: 0;
 }
 
+.panel-header--title-only {
+  justify-content: center;
+}
+
+.panel-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 2.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  text-align: center;
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -437,7 +505,7 @@ body {
 
 .brand h1 {
   margin: 0;
-  font-family: "Syne", "Space Grotesk", system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 1.7rem;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -446,9 +514,10 @@ body {
 
 .sub {
   margin: 0.15rem 0 0;
-  font-size: 1.22rem;
-  color: var(--text-muted);
-  font-weight: 300;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .pill {
@@ -462,21 +531,30 @@ body {
 }
 
 .panel-chat {
-  flex: 1;
+  flex: 0 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
   padding: 0.75rem;
+  overflow-y: auto;
+}
+
+.panel-chat:has(.empty-hint:not(.hidden)) {
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1.25rem, 4vw, 2rem) clamp(1rem, 5vw, 2.5rem);
 }
 
 .messages {
-  flex: 1;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
   padding: 0.25rem 0.2rem 0.5rem;
   scroll-behavior: smooth;
+}
+
+.messages:empty {
+  display: none;
 }
 
 .messages::-webkit-scrollbar {
@@ -489,25 +567,28 @@ body {
 }
 
 .bubble {
+  position: relative;
   max-width: 90%;
   padding: 0.7rem 0.95rem;
   border-radius: 1.1rem;
   font-size: 1.18rem;
   line-height: 1.45;
   font-weight: 400;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.32);
   white-space: pre-wrap;
   word-break: break-word;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .bubble.user {
   align-self: flex-end;
   background: var(--user-bubble);
   border-bottom-right-radius: 0.3rem;
-  font-family: "Syne", "Space Grotesk", system-ui, sans-serif;
-  font-size: 1.18rem;
+  font-family: var(--font-ui);
+  font-size: 1.12rem;
+  font-weight: 500;
 }
 
 .bubble.assistant {
@@ -528,13 +609,26 @@ body {
   color: #ffcccc;
 }
 
-.empty-hint {
+.glass > .empty-hint {
+  position: static;
+  z-index: auto;
+  display: block;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
+.empty-hint-text {
+  max-width: 42rem;
   text-align: center;
-  color: var(--text-muted);
-  font-size: 1.24rem;
-  line-height: 1.5;
-  margin: auto 1rem;
-  max-width: 32ch;
+  font-size: 1.15rem;
+  line-height: 1.55;
+  font-family: var(--font-ui);
+  font-weight: 500;
+}
+
+.empty-hint em {
+  font-style: italic;
 }
 
 .empty-hint.hidden {
@@ -553,30 +647,43 @@ body {
 }
 
 .input-glass {
+  position: relative;
   flex: 1;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.09) 0%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.34);
   border-radius: 0.9rem;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 #user-input {
+  position: relative;
+  z-index: 1;
   width: 100%;
   min-height: 2.75rem;
   max-height: 8rem;
   resize: none;
   border: none;
   background: transparent;
-  color: var(--text);
-  font-family: "Syne", "Space Grotesk", system-ui, sans-serif;
-  font-size: 1.18rem;
+  color: var(--text-cream);
+  font-family: var(--font-ui);
+  font-size: 1.12rem;
+  font-weight: 500;
   line-height: 1.4;
   padding: 0.7rem 0.85rem;
   outline: none;
+  text-shadow: var(--text-halo-soft);
+  caret-color: var(--accent);
 }
 
 #user-input::placeholder {
-  color: var(--text-muted);
+  color: var(--text-cream-muted);
+  text-shadow: var(--text-halo-soft);
 }
 
 .send {
@@ -713,6 +820,18 @@ body {
   transition: opacity 140ms ease;
   opacity: 0;
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .bubble,
+  .input-glass {
+    background: rgba(18, 16, 28, 0.88);
+  }
+
+  .glass::before {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

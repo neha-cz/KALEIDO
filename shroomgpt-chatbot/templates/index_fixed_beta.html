@@ -17,34 +17,16 @@
     <div class="scene-veil" aria-hidden="true"></div>
 
     <main class="shell">
-      <header class="glass panel-header">
-        <div class="brand">
-          <img
-            class="orb"
-            src="{{ url_for('static', filename='shroom-logo.png') }}"
-            alt="ShroomGPT logo"
-          />
-          <div>
-            <h1>ShroomGPT</h1>
-            <p class="sub">Fixed β demo · layers &amp; ratio set in code</p>
-          </div>
-        </div>
-        <div class="header-trip header-trip--demo">
-          <p id="demo-status" class="trip-status-compact" aria-live="polite">Loading…</p>
-          <label class="trip-field trip-field-toggle trip-field-toggle--inline">
-            <span class="trip-label">Prompt</span>
-            <span class="trip-switch">
-              <input type="checkbox" id="prompt-engineering" checked />
-              <span class="trip-switch-track" aria-hidden="true"></span>
-            </span>
-          </label>
-        </div>
+      <header class="glass panel-header panel-header--title-only">
+        <h1 class="panel-title">KALEIDO</h1>
       </header>
 
       <section id="chat" class="glass panel-chat" aria-live="polite">
         <div class="messages" id="messages"></div>
         <p id="empty" class="empty-hint">
-          Fixed inverse-temperature on demo layers is always on. Toggle prompt for LSD+shrooms persona.
+          <span class="empty-hint-text">
+            A chat toy that reproduces a neural signature of psychedelic cognition, motivated by mech interp findings for attention inverse-temperature.
+          </span>
         </p>
       </section>
 

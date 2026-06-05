@@ -1,6 +1,5 @@
 /**
  * UI for app_fixed_beta_demo.py — fixed β on demo layers (hardcoded server-side).
- * Only control exposed: prompt engineering on/off.
  */
 (function () {
   const messagesEl = document.getElementById("messages");
@@ -10,7 +9,6 @@
   const emptyHint = document.getElementById("empty");
 
   const statusEl = document.getElementById("demo-status");
-  const promptEngineeringEl = document.getElementById("prompt-engineering");
 
   let history = [];
 
@@ -43,18 +41,13 @@
         ? trip.demo_beta_ratio.toFixed(2)
         : "?";
     const betaOn = trip.active && trip.beta_patch;
-    const betaLabel = betaOn
+    return betaOn
       ? `β fixed · layers ${layers} · ratio ${ratio}`
       : "β off";
-    const promptLabel = trip.prompt_engineering ? "prompt on" : "prompt off";
-    return `${betaLabel} · ${promptLabel}`;
   }
 
   function applyState(trip) {
     if (statusEl) statusEl.textContent = formatStatus(trip);
-    if (promptEngineeringEl && trip && typeof trip.prompt_engineering === "boolean") {
-      promptEngineeringEl.checked = trip.prompt_engineering;
-    }
   }
 
   async function apiPost(url, body) {
@@ -93,21 +86,6 @@
       if (statusEl) statusEl.textContent = String(err.message || err);
     }
     await refreshState();
-  }
-
-  if (promptEngineeringEl) {
-    promptEngineeringEl.addEventListener("change", async () => {
-      const prev = !promptEngineeringEl.checked;
-      try {
-        const data = await apiPost("/api/trip/prompt_engineering", {
-          enabled: promptEngineeringEl.checked,
-        });
-        if (data.trip) applyState(data.trip);
-      } catch (err) {
-        promptEngineeringEl.checked = prev;
-        if (statusEl) statusEl.textContent = String(err.message || err);
-      }
-    });
   }
 
   form.addEventListener("submit", async (e) => {

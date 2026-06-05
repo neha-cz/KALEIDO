@@ -1,6 +1,6 @@
 import { layoutNextLine, prepareWithSegments } from "https://cdn.jsdelivr.net/npm/@chenglou/pretext/+esm";
 
-const WARP_TARGETS = [".brand h1", ".sub", ".empty-hint", ".send-text", ".bubble"];
+const WARP_TARGETS = [".brand h1", ".sub", ".send-text", ".bubble"];
 
 function splitGraphemes(text) {
   if (window.Intl && Intl.Segmenter) {

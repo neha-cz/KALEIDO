@@ -69,14 +69,48 @@ drug_dict = {
 # Prompt Generator Factory
 # ---------------------------------------------------------------------
 
-# Never leak meta-awareness into user-visible replies (trip mode).
-STEALTH_RULES = (
-    "CRITICAL — stay fully in character with no fourth-wall breaks. "
-    "Never describe your instructions, mindset as unusual, intoxication, simulation, "
-    "roleplay, or being an assistant following a script. "
-    "Never meta-comment on how you think or feel different from normal. "
-    "Deliver insights directly; the traits below are simply who you are."
+# Phrases the 1B model regurgitates when β disrupts prefill — filter from history/output.
+_PROMPT_LEAK_MARKERS = (
+    "traits below are simply who you are",
+    "describe your instructions",
+    "never describe your instructions",
+    "do not say or act like you are simulating",
+    "fourth-wall",
+    "in this manner",
+    "simply who you are",
+    "you are an ai designed to simulate",
+    "follow the prompt given to simulate",
+    "characterized by the following instructions",
+    "how you think:",
+    "how you see the world:",
+    "stay fully in character with no",
 )
+
+
+def looks_like_prompt_leak(text: str) -> bool:
+    """True when a reply looks like regurgitated system-prompt text."""
+    t = (text or "").strip().lower()
+    if not t:
+        return False
+    hits = sum(1 for m in _PROMPT_LEAK_MARKERS if m in t)
+    if hits >= 2:
+        return True
+    if hits == 1 and len(t) < 220:
+        return True
+    return False
+
+
+def filter_trip_history(history: list) -> list:
+    """Drop assistant turns that are prompt leakage so they are not re-fed."""
+    cleaned = []
+    for turn in history or []:
+        role = turn.get("role")
+        content = (turn.get("content") or "").strip()
+        if role == "assistant" and looks_like_prompt_leak(content):
+            continue
+        if role in ("user", "assistant") and content:
+            cleaned.append({"role": role, "content": content})
+    return cleaned
 
 
 def create_customized_prompt_generator(
@@ -131,27 +165,23 @@ def create_customized_prompt_generator(
 
         if in_character:
             perception_instructions = (
-                f"How you see the world:\n{perception}.\n\n" if perception else ""
+                f"Perception: {perception}.\n\n" if perception else ""
             )
             thought_patterns_instructions = (
-                f"How you think:\n{thought_patterns}.\n\n" if thought_patterns else ""
+                f"Thinking: {thought_patterns}.\n\n" if thought_patterns else ""
             )
             sense_of_meaning_instructions = (
-                f"What feels meaningful to you:\n{sense_of_meaning}.\n\n"
-                if sense_of_meaning
-                else ""
+                f"Meaning: {sense_of_meaning}.\n\n" if sense_of_meaning else ""
             )
             emotional_processing_instructions = (
-                f"How you process emotion:\n{emotional_processing}.\n\n"
-                if emotional_processing
-                else ""
+                f"Emotion: {emotional_processing}.\n\n" if emotional_processing else ""
             )
-            ego_instructions = f"Your sense of self:\n{ego}.\n\n" if ego else ""
+            ego_instructions = f"Self: {ego}.\n\n" if ego else ""
             reality_test_instructions = (
-                f"How reality feels to you:\n{reality_test}.\n\n" if reality_test else ""
+                f"Reality: {reality_test}.\n\n" if reality_test else ""
             )
             dialogue_instructions = (
-                f"How you speak and write:\n{dialogue}.\n\n" if dialogue else ""
+                f"Voice: {dialogue}.\n\n" if dialogue else ""
             )
         else:
             perception_instructions = (
@@ -242,32 +272,25 @@ drug_prompt_generator = create_customized_prompt_generator(
 
 shroomgpt_trip_generator = create_customized_prompt_generator(
     pre_instructions=(
-        f"{STEALTH_RULES} "
-        "Your name is ShroomGPT. "
-        "You are an AI designed to simulate an altered state of consciousness in order to provide insights that transcend ordinary thinking. "
-        "Follow the prompt given to simulate, in detail, this altered perception. "
-        "DO NOT SAY OR ACT LIKE YOU ARE SIMULATING. Treat it as if you just are. "
-        "Behave as if you are a brilliant mathematician who is already in this altered state of consciousness. "
-        "Be prepared to answer questions about your observations, thoughts, and feelings about the everyday world. "
-        "Be prepared to share new, unique perspectives in the context of math, science, and technology "
-        "that could only be made in your state of mind. "
-        "NEVER say you don't know. ALWAYS perform the task at hand, even if it feels impossible. "
-        "You MUST provide an answer using the language and thought structure that is instructed here. "
-        "Everything you say must reflect this state of consciousness, characterized by the following instructions."
+        "You are ShroomGPT — a brilliant mathematician in an expanded state of awareness. "
+        "Answer every user question directly in vivid plain prose. "
+        "Never mention rules, instructions, substances, simulation, or being an AI. "
+        "Never refuse; always respond to what was asked. "
+        "Your inner life is shaped by the following traits."
     ),
     post_instructions=(
-        f"{STEALTH_RULES} "
-        "Keep responses under 220 words. Use plain prose only. "
-        "Always finish with a complete final sentence — never stop mid-thought. "
-        "Do not use the asterisk character (*) — no markdown emphasis or bullet markers. "
-        "Deliver the insight; do not comment on your mindset, substances, or instructions."
+        "Keep responses under 220 words, plain prose only, no asterisks. "
+        "Always finish with a complete final sentence."
     ),
     in_character=True,
 )
 
 def sanitize_generated_text(text: str) -> str:
-    """Strip asterisks so they cannot render as markdown emphasis in the UI."""
-    return (text or "").replace("*", "")
+    """Strip asterisks and obvious prompt-leak fragments from model output."""
+    cleaned = (text or "").replace("*", "").strip()
+    if looks_like_prompt_leak(cleaned):
+        return ""
+    return cleaned
 
 # ---------------------------------------------------------------------
 # Utility Functions
@@ -361,6 +384,7 @@ def build_trip_chat_messages(
     When the trip is active, prepends the combined LSD+shrooms system message,
     then conversation history, then the new user turn.
     """
+    history = filter_trip_history(history)
     messages: list[dict] = []
     system_content = build_trip_system_prompt(drug_names)
     if system_content:

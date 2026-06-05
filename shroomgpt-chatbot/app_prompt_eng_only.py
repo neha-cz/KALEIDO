@@ -1,34 +1,29 @@
 """
-Flask API for a Llama chat with a fixed, mech-interp-derived β patch:
-apply β just above the measured critical value β* to the measured demo layers.
+Flask API for a Llama chat with KALEIDO prompt engineering ONLY.
 
-Core idea
----------
-A continuous Hopfield network has energy
-    E(ξ) = −β⁻¹ · logsumexp(β · Xξ) + ½ξᵀξ + const
-and its one-step update is exactly softmax(β · Xξ) — i.e. attention, with
-β = 1/√d the inverse temperature. β controls the *ruggedness* of the energy
-landscape:
-    high β  → deep, sharp, well-separated basins → sharp single-pattern retrieval
-    low  β  → shallow, merged basins → metastable mixtures of stored patterns
-              (the network roams between memories instead of committing).
+This version removes the mech-interp β intervention entirely. The model always
+runs at native attention temperature (β₀ = 1/√d) on every layer. The only thing
+that changes between "sober" and "trip" mode is whether the KALEIDO system
+prompt is prepended to the chat messages.
 
-The earlier demo used an annealing / ODE-ish story. This version removes that.
-When the trip is active, the patch simply multiplies HF's native attention
-`scaling` by a fixed ratio on the measured demo layers only:
+Use this to isolate the effect of prompt engineering on the model's reasoning,
+with no attention-scaling / Hopfield-β manipulation confounding the result.
 
-    demo layers = [8, 9, 5]
-    β* ≈ 0.80625
-    demo β ratio = 0.78  # just above β*, safely on the coherent side
+What was removed vs. the β-patch version
+-----------------------------------------
+  * patch_llama_attention(): gone. No monkeypatching of eager_attention_forward
+    or the attention dispatch registry. HF attention is left 100% native.
+  * BetaTripState.beta_ratio(): gone. There is no per-layer β scaling.
+  * demo_layers / demo_beta_ratio / beta_star: gone.
+  * per_layer_beta_ratio / per_layer_temperature outputs: now constant 1.0
+    vectors, kept only so the existing UI doesn't break.
 
-All non-demo layers remain at ratio = 1.0. There is no time dependence, no
-layer hierarchy curve, and no β recovery across turns. Sampling temperature is
-left as the user/request value; it is not coupled to the β patch.
-
-When the trip is active, a KALEIDO system prompt is also prepended to the
-chat messages, conditioning the model on an altered-state persona. The persona
-is encoded at native β during prefill; only freshly decoded assistant tokens
-receive the flattened β on the demo layers.
+What was kept
+-------------
+  * KALEIDO system prompt, prepended when the trip is active.
+  * All Flask routes and their response shapes (start/stop/configure/advance/
+    state/annealing/chat), so the existing frontend keeps working unchanged.
+  * Sampling temperature / top_p / seed handling.
 
 Setup
 -----
@@ -42,11 +37,7 @@ Environment variables
   HF_MODEL   (default: meta-llama/Llama-3.2-1B-Instruct)
   DEVICE     (default: auto)
   PORT       (default: 5001)
-  TRIP_DEBUG      (default: 0) set to 1 to print β ratios per generation
-  DEMO_BETA_RATIO (default: 0.85) fixed β ratio for demo layers
-  DEMO_LAYERS     (default: 8,9,5) comma-separated demo-layer indices
 """
-import math
 import os
 import threading
 
@@ -64,25 +55,6 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})
 # Config
 # ============================================================
 HF_MODEL = os.environ.get("HF_MODEL", "meta-llama/Llama-3.2-1B-Instruct")
-TRIP_DEBUG = os.environ.get("TRIP_DEBUG", "0") == "1"
-APPLY_BETA_ON_PREFILL = os.environ.get("APPLY_BETA_ON_PREFILL", "0") == "1"
-
-# Measured from the β/layer sweep.
-BETA_STAR = float(os.environ.get("BETA_STAR", "0.80625"))
-DEMO_BETA_RATIO = float(os.environ.get("DEMO_BETA_RATIO", "0.49"))
-DEMO_LAYERS = tuple(
-    int(x.strip())
-    for x in os.environ.get("DEMO_LAYERS", "2,3").split(",")
-    if x.strip()
-)
-
-# Fixed trip profile. Kept as a dict so the existing Flask routes/UI can stay
-# the same, but these are no longer annealing parameters.
-TRIP_PRESET = {
-    "demo_beta_ratio": DEMO_BETA_RATIO,
-    "demo_layers": DEMO_LAYERS,
-    "beta_patch": True,
-}
 
 # ============================================================
 # Trip system prompt (KALEIDO persona)
@@ -113,16 +85,10 @@ KALEIDO_SYSTEM_PROMPT = (
     "Always finish with a complete final sentence."
 )
 
-# KALEIDO_SYSTEM_PROMPT = ("Your name is KALEIDO. Do not mention it unless explicitly asked.")
-
 # Generation length: ~220 words ≈ 300–350 tokens; cap leaves headroom so replies
 # finish naturally instead of mid-sentence truncation.
 DEFAULT_MAX_NEW_TOKENS = 512
 MAX_NEW_TOKENS_CAP = 1024
-
-# Safety clamp for the fixed β ratio. β=0 makes the landscape perfectly flat
-# and usually incoherent; the demo should sit just above β*.
-BETA_RATIO_FLOOR = 0.05
 
 
 def _pick_device():
@@ -140,79 +106,35 @@ _GENERATION_LOCK = threading.Lock()
 
 
 # ============================================================
-# Trip State — fixed β patch on measured demo layers
+# Trip State — prompt engineering only, no β intervention
 # ============================================================
-class BetaTripState:
-    """Tracks whether the fixed demo β patch is active.
+class PromptTripState:
+    """Tracks whether the KALEIDO system prompt is active.
 
-    This version intentionally removes annealing / ODE behavior. When active,
-    only the measured demo layers receive a fixed β ratio just above β*.
-
-    r(ℓ) = β(ℓ)/β₀
-        = demo_beta_ratio  if ℓ ∈ demo_layers and patch active
-        = 1.0              otherwise
+    There is NO attention/β manipulation in this version. The only effect of
+    an active trip is that the KALEIDO system prompt gets prepended to the chat
+    messages. Everything β-related is stubbed out so the existing routes/UI keep
+    working but have no effect on the model internals.
     """
 
     def __init__(self):
         self.active = False
-        self.beta_patch = True
-        self.demo_beta_ratio = max(BETA_RATIO_FLOOR, min(1.0, DEMO_BETA_RATIO))
-        self.demo_layers = tuple(DEMO_LAYERS)
-        self.beta_star = BETA_STAR
         self.n_layers = 0  # set after model loads
 
-    def beta_ratio(self, layer_idx: int, n_layers: int) -> float:
-        """β(ℓ)/β₀. 1.0 = sober/native attention.
-
-        The patch is deliberately layer-local and time-independent: no decay,
-        no hierarchy weighting, no annealing back to baseline.
-        """
-        if not self.active or not self.beta_patch:
-            return 1.0
-        if layer_idx in self.demo_layers:
-            return max(BETA_RATIO_FLOOR, min(1.0, self.demo_beta_ratio))
-        return 1.0
-
     def sampling_temperature_multiplier(self) -> float:
-        """Sampling temperature is no longer coupled to the β patch."""
+        """Sampling temperature is not modified by the persona."""
         return 1.0
 
     def advance(self):
-        """No-op kept for route compatibility; fixed β does not anneal over turns."""
+        """No-op kept for route compatibility."""
         return None
 
-    def start(
-        self,
-        demo_beta_ratio: float = DEMO_BETA_RATIO,
-        demo_layers = DEMO_LAYERS,
-        beta_patch: bool = True,
-        **_ignored,
-    ):
+    def start(self, **_ignored):
         self.active = True
-        self.beta_patch = bool(beta_patch)
-        self.demo_beta_ratio = max(BETA_RATIO_FLOOR, min(1.0, float(demo_beta_ratio)))
-        self.demo_layers = tuple(int(x) for x in demo_layers)
 
-    def configure(
-        self,
-        demo_beta_ratio: float | None = None,
-        demo_layers = None,
-        beta_patch: bool | None = None,
-        annealing: bool | None = None,
-        **_ignored,
-    ):
-        # `annealing` is accepted for backward compatibility with the existing UI/API.
-        # It now means "enable/disable the fixed β patch".
-        if demo_beta_ratio is not None:
-            self.demo_beta_ratio = max(BETA_RATIO_FLOOR, min(1.0, float(demo_beta_ratio)))
-        if demo_layers is not None:
-            if isinstance(demo_layers, str):
-                demo_layers = [x.strip() for x in demo_layers.split(",") if x.strip()]
-            self.demo_layers = tuple(int(x) for x in demo_layers)
-        if beta_patch is not None:
-            self.beta_patch = bool(beta_patch)
-        if annealing is not None:
-            self.beta_patch = bool(annealing)
+    def configure(self, **_ignored):
+        """All β knobs are accepted and ignored; nothing to configure."""
+        return None
 
     def stop(self):
         self.active = False
@@ -220,103 +142,18 @@ class BetaTripState:
     def snapshot(self) -> dict:
         return {
             "active": self.active,
-            "beta_patch": self.beta_patch,
-            "annealing": self.beta_patch,  # backward-compatible field name
-            "beta_star": self.beta_star,
-            "demo_beta_ratio": self.demo_beta_ratio,
-            "demo_layers": list(self.demo_layers),
+            "beta_patch": False,
+            "annealing": False,  # backward-compatible field name
             "sampling_T_mult_now": self.sampling_temperature_multiplier(),
-            "note": "fixed β patch on demo_layers only; no annealing/ODE/time dependence",
+            "note": "prompt engineering only; no beta intervention, native attention on all layers",
         }
 
 
-TRIP = BetaTripState()
+TRIP = PromptTripState()
 
 
 # ============================================================
-# Attention patch — reads the per-layer β ratio from TRIP at every forward
-# pass and MULTIPLIES the attention `scaling` (== β₀) by it.
-#
-# HF computes softmax(scores * scaling) with scaling = 1/√d = β₀. Multiplying
-# scaling by r = β(ℓ)/β₀ ∈ (0,1] yields effective inverse-temperature
-# β(ℓ) = β₀·r, flattening the Hopfield energy landscape when r < 1.
-# r = 1 leaves the model untouched.
-#
-# Modern transformers (≥4.43) dispatches attention through a registry rather
-# than calling modeling_llama.eager_attention_forward directly, so we must
-# patch the registry entry as well. We try several known locations to stay
-# compatible across versions.
-# ============================================================
-def patch_llama_attention(n_layers: int):
-    from transformers.models.llama import modeling_llama
-
-    _original = modeling_llama.eager_attention_forward
-
-    def patched(module, query, key, value, attention_mask, scaling, **kwargs):
-        layer_idx = getattr(module, "layer_idx", 0)
-        r = TRIP.beta_ratio(layer_idx, n_layers)
-        if r < 1.0 and not APPLY_BETA_ON_PREFILL:
-            # Keep prompt encoding (incl. system prompt) at native β for stability.
-            # Apply β intervention only during autoregressive decode.
-            seq_len = query.shape[2]
-            # Cache plumbing differs across transformers versions; seq_len is robust:
-            # prefill has seq_len > 1, decode steps have seq_len == 1.
-            is_prefill = seq_len > 1
-            if is_prefill:
-                r = 1.0
-        if TRIP_DEBUG and layer_idx == n_layers - 1:
-            print(f"[trip-tick] layer={layer_idx} beta_ratio={r:.3f} "
-                  f"beta_eff={scaling * r:.4f} (beta0={scaling:.4f}) "
-                  f"active={TRIP.active} demo_layers={TRIP.demo_layers} "
-                  f"demo_beta_ratio={TRIP.demo_beta_ratio:.4f} "
-                  f"seq={query.shape[2]} decode={r < 1.0}")
-        return _original(module, query, key, value, attention_mask,
-                         scaling * r, **kwargs)
-
-    # 1) Patch the module-level symbol (for any code path that imports it directly).
-    modeling_llama.eager_attention_forward = patched
-
-    # 2) Patch the dispatch registry, which is what LlamaAttention.forward
-    #    actually calls on modern transformers. The registry has moved around
-    #    across versions, so try the known locations.
-    patched_registry = False
-    try:
-        from transformers.modeling_utils import ALL_ATTENTION_FUNCTIONS
-        ALL_ATTENTION_FUNCTIONS["eager"] = patched
-        patched_registry = True
-        print("[patch] registered in transformers.modeling_utils.ALL_ATTENTION_FUNCTIONS")
-    except Exception:
-        pass
-
-    if not patched_registry:
-        try:
-            from transformers.modeling_utils import AttentionInterface
-            # Newer versions expose AttentionInterface with a dict-like internal store.
-            if hasattr(AttentionInterface, "_global_mapping"):
-                AttentionInterface._global_mapping["eager"] = patched
-                patched_registry = True
-                print("[patch] registered via AttentionInterface._global_mapping")
-            elif hasattr(AttentionInterface, "register"):
-                AttentionInterface.register("eager", patched)
-                patched_registry = True
-                print("[patch] registered via AttentionInterface.register")
-        except Exception:
-            pass
-
-    if not patched_registry:
-        print("[patch] WARNING: could not patch attention registry — your "
-              "transformers version may use a different dispatch path. "
-              "β-annealing may not take effect. Print the transformers "
-              "version and inspect modeling_llama for the dispatch site.")
-
-    print(f"[patch] LlamaAttention patched; fixed β ratio reads from TRIP per layer "
-          f"(n_layers={n_layers}, demo_layers={DEMO_LAYERS}, "
-          f"demo_beta_ratio={DEMO_BETA_RATIO}, beta_star={BETA_STAR}, "
-          f"debug={TRIP_DEBUG}, prefill_beta={APPLY_BETA_ON_PREFILL})")
-
-
-# ============================================================
-# Model loading
+# Model loading — native attention, no patching
 # ============================================================
 print(f"[load] Loading {HF_MODEL} on {DEVICE} ({DTYPE})...")
 print("[load] First run downloads weights; subsequent runs load from cache.")
@@ -329,7 +166,6 @@ model = AutoModelForCausalLM.from_pretrained(
     HF_MODEL,
     torch_dtype=DTYPE,
     device_map=DEVICE if DEVICE != "cpu" else None,
-    attn_implementation="eager",
 )
 if DEVICE == "cpu":
     model = model.to(DEVICE)
@@ -337,8 +173,7 @@ model.eval()
 
 N_LAYERS = model.config.num_hidden_layers
 TRIP.n_layers = N_LAYERS
-patch_llama_attention(N_LAYERS)
-print(f"[load] Ready. {N_LAYERS} layers on {DEVICE}.")
+print(f"[load] Ready. {N_LAYERS} layers on {DEVICE}. No attention patch applied.")
 
 
 # ============================================================
@@ -423,16 +258,13 @@ def _generate(messages, max_new_tokens, temperature, top_p, seed):
 
 
 def _per_layer_beta_ratio() -> list:
-    """For visualization: current β(t,ℓ)/β₀ at each layer (1.0 = sober)."""
-    return [TRIP.beta_ratio(i, N_LAYERS) for i in range(N_LAYERS)]
+    """Constant 1.0 vector (native β on every layer). Kept for UI compatibility."""
+    return [1.0 for _ in range(N_LAYERS)]
 
 
 def _per_layer_temperature() -> list:
-    """For visualization: current effective softmax temperature T = β₀/β = 1/ratio
-    at each layer (1.0 = sober, larger = hotter/flatter). This is the reciprocal
-    of the β ratio and is provided for convenience / backward compatibility.
-    """
-    return [1.0 / TRIP.beta_ratio(i, N_LAYERS) for i in range(N_LAYERS)]
+    """Constant 1.0 vector (native softmax temperature). Kept for UI compatibility."""
+    return [1.0 for _ in range(N_LAYERS)]
 
 
 # ============================================================
@@ -463,8 +295,8 @@ def health():
 
 @app.post("/api/trip/start")
 def trip_start():
-    """Begin a trip using the fixed TRIP_PRESET profile."""
-    TRIP.start(**TRIP_PRESET)
+    """Begin a trip: prepend the KALEIDO system prompt only."""
+    TRIP.start()
     return jsonify({
         "trip": TRIP.snapshot(),
         "per_layer_beta_ratio": _per_layer_beta_ratio(),
@@ -474,7 +306,7 @@ def trip_start():
 
 @app.post("/api/trip/annealing")
 def trip_annealing():
-    """Enable/disable the fixed β patch (legacy route name)."""
+    """Legacy route; β patch no longer exists, so this is effectively a no-op."""
     data = request.get_json(silent=True) or {}
     if "enabled" not in data:
         return jsonify({"error": "enabled (boolean) is required"}), 400
@@ -488,16 +320,9 @@ def trip_annealing():
 
 @app.post("/api/trip/configure")
 def trip_configure():
-    """Update fixed β demo knobs without changing active/inactive state."""
+    """Legacy route; all β knobs are accepted and ignored."""
     data = request.get_json(silent=True) or {}
-    TRIP.configure(
-        demo_beta_ratio=float(data["demo_beta_ratio"])
-        if "demo_beta_ratio" in data
-        else None,
-        demo_layers=data.get("demo_layers") if "demo_layers" in data else None,
-        beta_patch=bool(data["beta_patch"]) if "beta_patch" in data else None,
-        annealing=bool(data["annealing"]) if "annealing" in data else None,
-    )
+    TRIP.configure(**data)
     return jsonify({
         "trip": TRIP.snapshot(),
         "per_layer_beta_ratio": _per_layer_beta_ratio(),
@@ -517,9 +342,8 @@ def trip_stop():
 
 @app.post("/api/trip/advance")
 def trip_advance():
-    """Legacy no-op; fixed β patch has no comedown/annealing time."""
+    """Legacy no-op; nothing anneals."""
     data = request.get_json(silent=True) or {}
-    # Fixed β patch has no time state; endpoint kept for UI compatibility.
     _ = data.get("steps", None)
     TRIP.advance()
     return jsonify({
@@ -561,12 +385,11 @@ def chat():
         except (TypeError, ValueError):
             seed = None
 
-    # Snapshot β state *before* generation, since the trip advances after.
     trip_before = TRIP.snapshot()
     ratios_before = _per_layer_beta_ratio()
     temps_before = _per_layer_temperature()
 
-    # Sampling temperature is intentionally not coupled to the fixed β patch.
+    # Sampling temperature is the user/request value, unmodified.
     sampling_mult = TRIP.sampling_temperature_multiplier()
     effective_temperature = base_temperature * sampling_mult
 
@@ -580,7 +403,6 @@ def chat():
     if not reply:
         return jsonify({"error": "Empty model response"}), 502
 
-    # Kept for compatibility; fixed β does not advance/anneal over turns.
     TRIP.advance()
 
     return jsonify({
