@@ -29,33 +29,35 @@ python product.py        # → http://localhost:5001
 ```
 
 ## What's actually happening
-
-The β patch. Under the modern Hopfield interpretation of attention, each
+ 
+**The β patch.** Under the modern Hopfield interpretation of attention, each
 layer settles into minima of an energy landscape, and the inverse-temperature β
 controls how sharp that landscape is:
-
-High β → deep, well-separated basins → decisive, literal retrieval.
-Low β → shallow, merged basins → the model roams between associations
-instead of committing to one.
-
-KALEIDO multiplies β by a fixed ratio (default 0.65) on a small set of early
-layers (2,3), only during decoding — the prompt is still encoded at native β so
+ 
+- **High β** → deep, well-separated basins → decisive, literal retrieval.
+- **Low β** → shallow, merged basins → the model roams between associations
+  instead of committing to one.
+ 
+KALEIDO multiplies β by a fixed ratio (default `0.65`) on a small set of early
+layers (`2,3`), only during decoding — the prompt is still encoded at native β so
 the system prompt lands cleanly. Lowering β also raises the model's attention
-entropy, which is one of the documented signatures of the psychedelic state in
+entropy, which is one of the documented *signatures* of the psychedelic state in
 the brain under the Entropic Brain Hypothesis. KALEIDO reproduces that signature
 inside a transformer — though, as the research below found, the entropy is a
 marker of the altered state, not its cause.
-
-The persona vector. Following Anthropic's "persona vectors" method,
+ 
+**The persona vector.** Following the Persona Vectors method by Anthropic,
 a steering direction is computed as the mean difference in the model's
 activations when it answers under a "dissolved/no-self" system prompt versus a
-normal-assistant one, taken over the response tokens. That [layers × hidden]
+normal-assistant one, taken over the response tokens. That `[layers × hidden]`
 vector is added back into the residual stream at a single late layer (default
-13) as the model decodes:
-
+`13`) as the model decodes:
+ 
+```
 residual ← residual + coef · persona_vector[layer]
-
-coef (default 1.4) is the dissolution dial: at 0 the model is sober, and as
+```
+ 
+`coef` (default `1.4`) is the dissolution dial: at 0 the model is sober, and as
 it rises the first-person stance loosens and the language dissolves — until, past
 a threshold, coherence gives out. The default sits just below that edge.
 
@@ -72,16 +74,21 @@ writeup and code:
 
 ## Knobs
 
+## Knobs
+ 
 | Setting | What it does |
 |---|---|
-| `DEMO_BETA_RATIO` | β multiplier on demo layers (lower = looser; default 0.40) |
-| `DEMO_LAYERS` | which layers receive the patch (default `2,3`) |
-| prompt engineering | toggle the KALEIDO voice independently of the β patch |
+| `DEMO_BETA_RATIO` | β multiplier on demo layers (lower = looser; default `0.65`) |
+| `DEMO_LAYERS` | which layers receive the β patch (default `2,3`) |
+| `PERSONA_COEF` | persona-vector steering strength (higher = more dissolved; default `1.4`) |
+| `PERSONA_LAYER` | residual layer the persona vector is added at (default `13`) |
+| `PERSONA_ON` | enable/disable the persona steer (default `1`) |
+| `PERSONA_VECTOR` | path to the persona vector `.pt` |
 | `TRIP_DEBUG` | print per-layer β ratios during generation |
-
+ 
 All knobs are settable via environment variables or the `/api/trip/configure`
-endpoint; the β patch and the system-prompt voice are independent, so you can run
-either one alone.
+endpoint. The β patch and the persona steer are independent — you can run either
+one alone, or stack them.
 
 ## Stack
 
