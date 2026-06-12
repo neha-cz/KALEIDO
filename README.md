@@ -85,7 +85,7 @@ All knobs are settable via environment variables or the `/api/trip/configure`
 endpoint; the β patch and the system-prompt voice are independent, so you can run
 either one alone.
 
-Stack
+## Stack
 
 Flask + HuggingFace Transformers, running locally on CPU / MPS / CUDA.
 Single-file backend (app.py). The β patch hooks Llama's eager attention and the
@@ -94,7 +94,7 @@ persona steer is a forward hook on one decoder layer that adds the steering
 vector to the residual stream during decoding. No external services, no API keys
 beyond a HuggingFace login for the model weights.
 
-Limitations
+## Limitations
 
 A toy, not a product claim. The model has no self to dissolve — what KALEIDO
 steers is the language, which for a text model is the only place the phenomenon
