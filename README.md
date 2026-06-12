@@ -1,24 +1,22 @@
 # KALEIDO
-
+ 
 KALEIDO is a chat interface that pushes a small language model toward a
 dissolved, associative, ego-loosened voice using two interventions reached down
-inside the transformer — live edits to the model's
+inside the transformer — not prompting tricks, but live edits to the model's
 internal computation at inference time.
-
-β flattening. A patch to the attention mechanism lowers its inverse
-"temperature," β, on a couple of early layers. Attention spreads instead of
-sharpening, and the replies loosen toward the metaphorical and the associative.
-
-Persona-vector steering. A direction in activation space — extracted from
-the model's own contrast between a "dissolved" and a "normal" voice — is added
-back into the residual stream as the model writes, steering its language toward
-an egoless, boundary-dissolving register.
-
-
-In tandem: β alters the texture of processing, the persona vector steers
-the voice. Both are mechanistic, both are toggleable, and the result is a model
+ 
+1. **β flattening.** A patch to the attention mechanism lowers its inverse
+   "temperature," β, on a couple of early layers. Attention spreads instead of
+   sharpening, and the replies loosen toward the metaphorical and the associative.
+2. **Persona-vector steering.** A direction in activation space — extracted from
+   the model's own contrast between a "dissolved" and a "normal" voice — is added
+   back into the residual stream as the model writes, steering its language toward
+   an egoless, boundary-dissolving register.
+ 
+The two stack: β alters the *texture* of processing, the persona vector steers
+the *voice*. Both are mechanistic, both are toggleable, and the result is a model
 that talks like it has come loose from itself.
-
+ 
 ![Universe Demo](kaleido-universe-demo.png)
 
 ## Try it
