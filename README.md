@@ -77,22 +77,6 @@ writeup and code:
 
 [ebh-transformers](https://github.com/neha-cz/ebh-transformers) 
 
-## Knobs
- 
-| Setting | What it does |
-|---|---|
-| `DEMO_BETA_RATIO` | β multiplier on demo layers (lower = looser; default `0.65`) |
-| `DEMO_LAYERS` | which layers receive the β patch (default `2,3`) |
-| `PERSONA_COEF` | persona-vector steering strength (higher = more dissolved; default `1.2`) |
-| `PERSONA_LAYER` | residual layer the persona vector is added at (default `13`) |
-| `PERSONA_ON` | enable/disable the persona steer (default `1`) |
-| `PERSONA_VECTOR` | path to the persona vector `.pt` |
-| `TRIP_DEBUG` | print per-layer β ratios during generation |
- 
-All knobs are settable via environment variables or the `/api/trip/configure`
-endpoint. The β patch and the persona steer are independent — you can run either
-one alone, or stack them.
-
 ## Stack
 
 Flask + HuggingFace Transformers, running locally on CPU / MPS / CUDA.
