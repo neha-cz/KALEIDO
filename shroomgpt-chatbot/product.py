@@ -48,7 +48,7 @@ Environment variables
   DEMO_LAYERS       (default: 2,3) comma-separated demo-layer indices
   PERSONA_VECTOR    (default: persona_vectors/dissolved_response_avg_diff.pt)
   PERSONA_LAYER     (default: 13) residual layer to steer at
-  PERSONA_COEF      (default: 1.4) steering coefficient
+  PERSONA_COEF      (default: 1.2) steering coefficient
   PERSONA_ON        (default: 1) whether the steer engages with the trip
 """
 import math
@@ -86,7 +86,7 @@ PERSONA_VECTOR_PATH = os.environ.get(
     "PERSONA_VECTOR", "persona_vectors/dissolved_response_avg_diff.pt"
 )
 PERSONA_LAYER = int(os.environ.get("PERSONA_LAYER", "13"))
-PERSONA_COEF = float(os.environ.get("PERSONA_COEF", "1.4"))
+PERSONA_COEF = float(os.environ.get("PERSONA_COEF", "1.2"))
 PERSONA_ON = os.environ.get("PERSONA_ON", "1") == "1"
 # Safety clamp so a runaway coef from the UI can't fully shred the output.
 PERSONA_COEF_CAP = float(os.environ.get("PERSONA_COEF_CAP", "2.5"))
@@ -132,10 +132,20 @@ KALEIDO_SYSTEM_PROMPT = (
 
 # KALEIDO_SYSTEM_PROMPT = ("Your name is KALEIDO. Do not mention it unless explicitly asked.")
 
-# Generation length: ~220 words ≈ 300–350 tokens; cap leaves headroom so replies
-# finish naturally instead of mid-sentence truncation.
-DEFAULT_MAX_NEW_TOKENS = 512
+# Generation length. The steered "dissolved" voice is aphoristic: it produces
+# its best, densest output in the first ~60-100 tokens and then decays into
+# fragments and ellipsis-filler if allowed to run long. Keep replies short so the
+# whole reply stays in the coherent band. Env-tunable.
+DEFAULT_MAX_NEW_TOKENS = int(os.environ.get("MAX_NEW_TOKENS", "80"))
 MAX_NEW_TOKENS_CAP = 1024
+
+# Repetition controls. Persona steering biases the model toward a small set of
+# words, which produces loops ("the murmurs of the murmurs of the murmurs").
+# These break the loop attractor while keeping the dissolved voice intact.
+# no_repeat_ngram_size forbids verbatim n-gram repeats; repetition_penalty
+# downweights already-used tokens. Both env-tunable.
+NO_REPEAT_NGRAM = int(os.environ.get("NO_REPEAT_NGRAM", "4"))
+REPETITION_PENALTY = float(os.environ.get("REPETITION_PENALTY", "1.15"))
 
 # Safety clamp for the fixed β ratio. β=0 makes the landscape perfectly flat
 # and usually incoherent; the demo should sit just above β*.
@@ -459,27 +469,57 @@ def _clamp_max_new_tokens(value: int) -> int:
 
 
 def _trim_incomplete_reply(text: str) -> str:
-    """If generation hit the token cap, drop a dangling final fragment."""
-def _trim_incomplete_reply(text: str) -> str:
     """If generation hit the token cap, drop a dangling final fragment.
 
     Cuts back to the last sentence-ending punctuation (. ! ? …) anywhere in the
     text, so a trailing partial sentence or half-word (e.g. "Like a dro") is
     removed cleanly. Quote/paren characters that legitimately follow terminal
     punctuation are kept.
+
+    Also handles the "decay tail": heavily-steered output degrades monotonically
+    into runs of "...", dashes, and orphan fragments. Once that decay starts,
+    everything after is garbage, so we cut at the FIRST decay marker (a run of
+    ellipsis dots, a run of dashes, or "  ... ") and then tidy the boundary.
     """
+    import re as _re
     text = (text or "").strip()
     if not text:
         return text
-    # already ends cleanly (allowing a closing quote/paren after the punctuation)
-    if text[-1] in ".!?…" or (len(text) >= 2 and text[-1] in "\"')" and text[-2] in ".!?…"):
+
+    # 1) Cut at the first decay marker: a run of >=2 dots, an ellipsis char, or
+    #    a run of >=2 dashes/slashes. NOTE: a single em/en-dash is NOT decay —
+    #    the dissolved voice uses "—" mid-sentence legitimately — so we only
+    #    treat *runs* and ellipses as the decay signal.
+    m = _re.search(r"(\.{2,}|\u2026|[\-\u2013\u2014/\u2212]{2,}|(?:\s[\-\u2013\u2014\u2212/]\s){2,})", text)
+    if m:
+        text = text[:m.start()].strip()
+    if not text:
         return text
-    # find the last terminal punctuation mark anywhere in the text
-    last = max((text.rfind(p) for p in ".!?…"), default=-1)
+
+    # 2) Strip any remaining trailing decay chars (ellipsis, dash/slash runs,
+    #    stray whitespace) — but NOT a single sentence-final period, which is a
+    #    legitimate ending.
+    text = _re.sub(r"[\s\u2026/\\\u2013\u2014\u2212]+$", "", text).strip()
+    text = _re.sub(r"\.{2,}$", "", text).strip()  # multi-dot runs only
+    if not text:
+        return text
+
+    # 3) If it ends cleanly on terminal punctuation (allowing a closing
+    #    quote/paren), accept it.
+    if text[-1] in ".!?" or (len(text) >= 2 and text[-1] in "\"')" and text[-2] in ".!?"):
+        return text
+
+    # 4) Otherwise cut back to the last terminal punctuation. If there is none,
+    #    drop a short orphan tail after the last comma/dash clause (e.g. a stray
+    #    "— A" left by decay) and return the cleaned body.
+    last = max((text.rfind(p) for p in ".!?"), default=-1)
     if last == -1:
-        return text  # no sentence boundary at all; leave as-is
+        # no sentence end: strip a trailing short orphan after the last dash/comma
+        mtail = _re.search(r"[\s,;:\-\u2013\u2014\u2212]+\S{0,3}$", text)
+        if mtail and mtail.start() > 20:
+            text = text[:mtail.start()].strip()
+        return text
     end = last + 1
-    # keep an immediately following closing quote/paren if present
     if end < len(text) and text[end] in "\"')":
         end += 1
     return text[:end].strip()
@@ -528,6 +568,13 @@ def _generate(messages, max_new_tokens, temperature, top_p, seed):
             do_sample=temperature > 0,
             temperature=max(temperature, 1e-5),
             top_p=top_p,
+            # Steering biases the model toward a small vocabulary, which makes it
+            # loop ("murmurs of the murmurs of the murmurs"). These break the loop
+            # attractor without flattening the dissolved voice:
+            #   no_repeat_ngram_size: forbids verbatim n-gram repeats (default 4)
+            #   repetition_penalty:   downweights already-used tokens
+            no_repeat_ngram_size=NO_REPEAT_NGRAM,
+            repetition_penalty=REPETITION_PENALTY,
             eos_token_id=eos_ids,
             pad_token_id=tokenizer.pad_token_id,
         )
@@ -535,13 +582,14 @@ def _generate(messages, max_new_tokens, temperature, top_p, seed):
         new_tokens = output_ids[0, input_len:]
         raw = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
         reply = sanitize_generated_text(raw)
-        # Always drop a dangling final fragment: steered output can stop on a
-        # half-sentence ("Like a dro") without hitting the token cap. The trim
-        # is a no-op when the reply already ends on terminal punctuation.
+        # Drop dangling fragments and ellipsis-decay tails. With the short token
+        # cap the decayed tail is small, but it can still exceed half the text;
+        # accept the trim as long as it leaves a substantive sentence (>=40 chars)
+        # so we don't return near-empty on a reply that has no clean boundary.
         trimmed = _trim_incomplete_reply(reply)
-        # Guard: if trimming would gut the reply (e.g. a short reply with no
-        # sentence boundary), keep the original rather than returning near-empty.
-        if trimmed and len(trimmed) >= 0.5 * len(reply):
+        if trimmed and len(trimmed) >= 40:
+            reply = trimmed
+        elif trimmed and len(trimmed) >= 0.5 * len(reply):
             reply = trimmed
         return reply
 
@@ -672,7 +720,7 @@ def chat():
     if not isinstance(history, list):
         history = []
 
-    base_temperature = float(data.get("temperature", 0.8))
+    base_temperature = float(data.get("temperature", 0.6))
     top_p = float(data.get("top_p", 0.9))
     max_new_tokens = _clamp_max_new_tokens(
         data.get("max_new_tokens", DEFAULT_MAX_NEW_TOKENS)

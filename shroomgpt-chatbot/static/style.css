@@ -71,17 +71,19 @@ body {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: radial-gradient(
+  background:
+    linear-gradient(rgba(4, 6, 18, 0.14), rgba(4, 6, 18, 0.14)),
+    radial-gradient(
       ellipse 100% 90% at 50% 48%,
-      rgba(6, 4, 18, 0.28) 0%,
-      rgba(6, 4, 18, 0.56) 100%
+      rgba(6, 4, 18, 0.34) 0%,
+      rgba(6, 4, 18, 0.62) 100%
     ),
     linear-gradient(
       180deg,
-      rgba(4, 6, 20, 0.52) 0%,
-      rgba(4, 6, 20, 0.2) 30%,
-      rgba(4, 6, 20, 0.2) 70%,
-      rgba(4, 6, 22, 0.6) 100%
+      rgba(4, 6, 20, 0.58) 0%,
+      rgba(4, 6, 20, 0.28) 30%,
+      rgba(4, 6, 20, 0.28) 70%,
+      rgba(4, 6, 22, 0.66) 100%
     );
 }
 
@@ -143,7 +145,7 @@ body {
 
 .shell {
   position: relative;
-  width: min(100%, 760px);
+  width: min(100%, 960px);
   max-height: 94vh;
   display: flex;
   flex-direction: column;
