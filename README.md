@@ -28,7 +28,13 @@ huggingface-cli login    # accept the Llama-3.2-1B license first
 python product.py        # → http://localhost:5001
 ```
 
-## What's actually happening
+## Results
+
+KALEIDO reliably shifts the model into a dissolved register (dissolution-lexicon rate 35×, by construction) at a measurable coherence cost (1.0 → 0.59). The cost is not uniform but bimodal (SD 0.21): under sampling, most generations stay legible while a minority fall past the coherence cliff. Notably, the intervention does not reduce first-person usage (the "ego" is re-described in dissolution terms rather than grammatically removed) and does not increase associative drift or lexical diversity over the sober baseline — the altered quality is stylistic, localized to vocabulary and imagery, not a global change in how far the model wanders from the prompt.
+
+![Kaleido Summary Table](kaleido_summary_table.png)
+
+## Methods
  
 **The β patch.** Under the modern Hopfield interpretation of attention, each
 layer settles into minima of an energy landscape, and the inverse-temperature β
@@ -61,13 +67,7 @@ residual ← residual + coef · persona_vector[layer]
 it rises the first-person stance loosens and the language dissolves — until, past
 a threshold, coherence gives out. The default sits just below that edge.
 
-## Results
-
-KALEIDO reliably shifts the model into a dissolved register (dissolution-lexicon rate 35×, by construction) at a measurable coherence cost (1.0 → 0.59). The cost is not uniform but bimodal (SD 0.21): under sampling, most generations stay legible while a minority fall past the coherence cliff. Notably, the intervention does not reduce first-person usage (the "ego" is re-described in dissolution terms rather than grammatically removed) and does not increase associative drift or lexical diversity over the sober baseline — the altered quality is stylistic, localized to vocabulary and imagery, not a global change in how far the model wanders from the prompt.
-
-![Kaleido Summary Table](kaleido_summary_table.png)
-
-## The research behind it
+## Inspiration
 
 KALEIDO grew out of a mechanistic-interpretability study of what β flattening
 actually does inside a transformer, and whether the entropic-brain / REBUS
@@ -78,7 +78,7 @@ writeup and code:
 
 [ebh-transformers](https://github.com/neha-cz/ebh-transformers) 
 
-## Stack
+## Tech Stack
 
 Flask + HuggingFace Transformers, running locally on CPU / MPS / CUDA.
 Single-file backend (app.py). The β patch hooks Llama's eager attention and the
