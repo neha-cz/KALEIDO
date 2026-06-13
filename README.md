@@ -80,7 +80,7 @@ writeup and code:
 |---|---|
 | `DEMO_BETA_RATIO` | β multiplier on demo layers (lower = looser; default `0.65`) |
 | `DEMO_LAYERS` | which layers receive the β patch (default `2,3`) |
-| `PERSONA_COEF` | persona-vector steering strength (higher = more dissolved; default `1.4`) |
+| `PERSONA_COEF` | persona-vector steering strength (higher = more dissolved; default `1.2`) |
 | `PERSONA_LAYER` | residual layer the persona vector is added at (default `13`) |
 | `PERSONA_ON` | enable/disable the persona steer (default `1`) |
 | `PERSONA_VECTOR` | path to the persona vector `.pt` |
