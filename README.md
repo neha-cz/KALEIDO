@@ -78,8 +78,6 @@ writeup and code:
 [ebh-transformers](https://github.com/neha-cz/ebh-transformers) 
 
 ## Knobs
-
-## Knobs
  
 | Setting | What it does |
 |---|---|
