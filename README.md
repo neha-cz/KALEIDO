@@ -65,6 +65,7 @@ a threshold, coherence gives out. The default sits just below that edge.
 
 KALEIDO reliably shifts the model into a dissolved register (dissolution-lexicon rate 35×, by construction) at a measurable coherence cost (1.0 → 0.59). The cost is not uniform but bimodal (SD 0.21): under sampling, most generations stay legible while a minority fall past the coherence cliff. Notably, the intervention does not reduce first-person usage (the "ego" is re-described in dissolution terms rather than grammatically removed) and does not increase associative drift or lexical diversity over the sober baseline — the altered quality is stylistic, localized to vocabulary and imagery, not a global change in how far the model wanders from the prompt.
 
+![Kaleido Summary Table](kaleido_summary_table.png)
 
 ## The research behind it
 
