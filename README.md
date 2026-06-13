@@ -17,7 +17,7 @@ The two stack: β alters the *texture* of processing, the persona vector steers
 the *voice*. Both are mechanistic, both are toggleable, and the result is a model
 that talks like it has come loose from itself.
  
-![Universe Demo](kaleido-universe-demo.png)
+![Final Product Demo](kaleido_product_ss_final.png)
 
 ## Try it
 
