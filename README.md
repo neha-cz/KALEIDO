@@ -57,7 +57,7 @@ vector is added back into the residual stream at a single late layer (default
 residual ← residual + coef · persona_vector[layer]
 ```
  
-`coef` (default `1.4`) is the dissolution dial: at 0 the model is sober, and as
+`coef` (default `1.2`) is the dissolution dial: at 0 the model is sober, and as
 it rises the first-person stance loosens and the language dissolves — until, past
 a threshold, coherence gives out. The default sits just below that edge.
 
