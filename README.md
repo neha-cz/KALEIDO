@@ -24,7 +24,7 @@ the voic*, and the dream injection supplies visual content. All are
 mechanistic, all are toggleable, and the result is a model that talks like it
 has come loose from itself — without a single line of prompt engineering.
 
-![Product Demo](kaleido_product_ss_final.png)
+![Product Demo](kaleido_product_demo.png)
 
 ## Try it
 
