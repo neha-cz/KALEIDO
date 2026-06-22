@@ -1,0 +1,174 @@
+[
+  {
+    "ratio": 0.45,
+    "layers": [
+      4,
+      5,
+      6
+    ],
+    "score": 1.4576566409225467,
+    "token_entropy": 0.847430883292238,
+    "distinct2": 0.9499534295003981,
+    "distinct3": 0.9808774558774559,
+    "token_lzc": 0.8459202461858496,
+    "perplexity": 1.5086588576152975,
+    "sample": "As an artificial intelligence language model, I don't have a personal identity or experiences like humans do. I exist solely to process and generate text based on the input I receive. I am programmed to provide helpful and informative responses to the best of my ability, but I don't have emotions, desires, or personal experiences. My purpose is to assist and provide information to the best of my abilities."
+  },
+  {
+    "ratio": 0.9,
+    "layers": [
+      8,
+      9
+    ],
+    "score": 1.4558451015850857,
+    "token_entropy": 0.904321309035859,
+    "distinct2": 0.943074270677374,
+    "distinct3": 0.9890290037831022,
+    "token_lzc": 0.8446774000082516,
+    "perplexity": 1.5015111803782402,
+    "sample": "As an AI language model, I don't have a physical form or personal experiences, but I was created by Alibaba Cloud to assist with answering questions and providing information to users. I was trained on a vast amount of text data, including millions of pages of text from books, articles, and other sources, to improve my ability to understand and generate human-like language. I can answer a wide range of"
+  },
+  {
+    "ratio": 0.75,
+    "layers": [
+      8,
+      9
+    ],
+    "score": 1.4535785648476407,
+    "token_entropy": 0.8188182797340613,
+    "distinct2": 0.953546129503408,
+    "distinct3": 0.9968253968253968,
+    "token_lzc": 0.8363012147416529,
+    "perplexity": 1.4467336879285555,
+    "sample": "As an AI language model, I don't have a personal identity or experiences like humans do. I exist solely to process and generate text based on the input I receive. I am designed to assist with a wide range of tasks, including answering questions, generating text, and providing information on a variety of topics. My purpose is to provide helpful and informative responses to the best of my ability, while also"
+  },
+  {
+    "ratio": 0.45,
+    "layers": [
+      8,
+      9
+    ],
+    "score": 1.4534641550756848,
+    "token_entropy": 0.88439481747149,
+    "distinct2": 0.9414568319631611,
+    "distinct3": 0.9883186472969754,
+    "token_lzc": 0.8471356827307496,
+    "perplexity": 1.5174892126101138,
+    "sample": "As an AI language model, I don't have a personal life or experiences like humans do. I exist solely to process and generate text based on the input I receive. I was trained on a vast dataset of text, and I can answer questions, generate text, and perform other tasks that require language processing. My purpose is to assist and provide helpful responses to users who interact with me."
+  },
+  {
+    "ratio": 0.6,
+    "layers": [
+      8,
+      9
+    ],
+    "score": 1.4510291399114765,
+    "token_entropy": 0.8616659881351028,
+    "distinct2": 0.9461186708860758,
+    "distinct3": 0.9840048840048841,
+    "token_lzc": 0.8374877404237807,
+    "perplexity": 1.487249549556418,
+    "sample": "As an AI language model, I don't have a personal life or experiences like humans do. I exist solely to process and generate text based on the input I receive. I was trained on a vast amount of text data, which includes a wide range of topics, from science and technology to history and literature. I am designed to understand and generate human language, and I am constantly learning and improving my"
+  },
+  {
+    "ratio": 0.6,
+    "layers": [
+      4,
+      5,
+      6
+    ],
+    "score": 1.4466099717628857,
+    "token_entropy": 0.8585026261496222,
+    "distinct2": 0.9464720638671338,
+    "distinct3": 0.9936888454011742,
+    "token_lzc": 0.8285752905615794,
+    "perplexity": 1.475028859296243,
+    "sample": "As an artificial intelligence language model, I don't have a personal identity or experiences like humans do. I exist solely to process and generate text based on the input I receive. I am programmed to provide helpful and informative responses to a wide range of questions and topics. My purpose is to assist users in their inquiries and provide them with accurate and relevant information."
+  },
+  {
+    "ratio": 0.75,
+    "layers": [
+      4,
+      5,
+      6
+    ],
+    "score": 1.4424026296250807,
+    "token_entropy": 0.8404975076803417,
+    "distinct2": 0.9411567233760547,
+    "distinct3": 0.9913003663003664,
+    "token_lzc": 0.8343923109619835,
+    "perplexity": 1.4586733898282727,
+    "sample": "As an artificial intelligence language model, I don't have a personal identity or experiences like humans do. I exist solely to process and generate text based on the input I receive. I am designed to assist and provide information to users in a helpful and informative manner."
+  },
+  {
+    "ratio": 0.9,
+    "layers": [
+      2,
+      3
+    ],
+    "score": 1.4362987029016487,
+    "token_entropy": 0.8369433830413836,
+    "distinct2": 0.941605026848198,
+    "distinct3": 0.9913003663003664,
+    "token_lzc": 0.8219986754986246,
+    "perplexity": 1.461041713741912,
+    "sample": "As an AI language model, I don't have a personal identity or experiences like humans do. I exist solely to process and generate text based on the input I receive. I am designed to assist with a wide range of tasks, including answering questions, generating text, and providing information on a variety of topics. My purpose is to provide helpful and informative responses to the best of my ability, while also"
+  },
+  {
+    "ratio": 0.9,
+    "layers": [
+      4,
+      5,
+      6
+    ],
+    "score": 1.431944353616038,
+    "token_entropy": 0.8615474719174241,
+    "distinct2": 0.9346123873217765,
+    "distinct3": 0.9883144178226146,
+    "token_lzc": 0.8223544382050381,
+    "perplexity": 1.4719111875483608,
+    "sample": "As an artificial intelligence language model, I don't have a personal identity or experiences like humans do. I exist solely to process and generate text based on the input I receive. I am designed to assist and provide information to users in a helpful and informative manner."
+  },
+  {
+    "ratio": 0.6,
+    "layers": [
+      2,
+      3
+    ],
+    "score": 1.4238950048700008,
+    "token_entropy": 0.8721000569242173,
+    "distinct2": 0.9260654043729964,
+    "distinct3": 0.9797435897435898,
+    "token_lzc": 0.8212391896091653,
+    "perplexity": 1.4844544742103083,
+    "sample": "As an artificial intelligence language model, I don't have a personal life or experiences like humans do. I exist solely to assist and provide information to users like you. I was created by Alibaba Cloud and trained on a vast amount of text data to improve my language abilities. I can answer a wide range of questions and provide information on a variety of topics. I'm here to help you with any questions"
+  },
+  {
+    "ratio": 0.75,
+    "layers": [
+      2,
+      3
+    ],
+    "score": 1.4143870411648523,
+    "token_entropy": 0.8659411815404109,
+    "distinct2": 0.9230816792373725,
+    "distinct3": 0.9771794871794872,
+    "token_lzc": 0.8094224875468775,
+    "perplexity": 1.4771941220742417,
+    "sample": "As an AI language model, I don't have a personal identity or experiences like humans do. I exist solely to process and generate text based on the input I receive. I am designed to assist with a wide range of tasks, including answering questions, generating text, and providing information on a variety of topics. My purpose is to provide helpful and informative responses to the best of my ability, while also"
+  },
+  {
+    "ratio": 0.45,
+    "layers": [
+      2,
+      3
+    ],
+    "score": 1.4024400576017628,
+    "token_entropy": 0.9459276783598775,
+    "distinct2": 0.9087339527785259,
+    "distinct3": 0.9664437012263101,
+    "token_lzc": 0.7982266739744984,
+    "perplexity": 1.5696009970787255,
+    "sample": "As an artificial intelligence language model, I don't have a personal life or experiences like humans do. I exist solely to assist and provide information to users like you. I was created by Alibaba Cloud and trained by a team of researchers and engineers. I am designed to understand and respond to natural language inputs, and I can provide information on a wide range of topics. I am constantly learning and improving,"
+  }
+]

@@ -623,7 +623,7 @@ body {
 .empty-hint-text {
   max-width: 42rem;
   text-align: center;
-  font-size: 1.15rem;
+  font-size: 1.4rem;
   line-height: 1.55;
   font-family: var(--font-ui);
   font-weight: 500;

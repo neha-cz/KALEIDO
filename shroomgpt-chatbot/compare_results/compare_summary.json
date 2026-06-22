@@ -1,0 +1,101 @@
+{
+  "config": {
+    "num_prompts": 12,
+    "seeds": 3,
+    "metric_max_tokens": 128,
+    "base_seed": 7,
+    "beta_ratio": 0.65,
+    "beta_layers": "2,3",
+    "persona_vector": "persona_vectors/dissolved_response_avg_diff.pt",
+    "persona_layer": 13,
+    "persona_coef": 1.2,
+    "outdir": "compare_results",
+    "show_samples": 2
+  },
+  "summary": {
+    "first_person_rate": {
+      "sober_mean": 0.043342280774910424,
+      "sober_sd": 0.04752242540573317,
+      "kaleido_mean": 0.04708414178761889,
+      "kaleido_sd": 0.034317662482460556,
+      "delta": 0.0037418610127084653
+    },
+    "coherence": {
+      "sober_mean": 1.0,
+      "sober_sd": 0.0,
+      "kaleido_mean": 0.5841052696917372,
+      "kaleido_sd": 0.1999488664331762,
+      "delta": -0.41589473030826285
+    },
+    "lexical_diversity": {
+      "sober_mean": 0.8559124636119523,
+      "sober_sd": 0.03815966844199128,
+      "kaleido_mean": 0.8292480152538381,
+      "kaleido_sd": 0.08226016529198509,
+      "delta": -0.026664448358114212
+    },
+    "associative_drift": {
+      "sober_mean": 0.3365039179722468,
+      "sober_sd": 0.12295500494812979,
+      "kaleido_mean": 0.3230424722035726,
+      "kaleido_sd": 0.05139630193875334,
+      "delta": -0.013461445768674252
+    },
+    "dissolution_rate": {
+      "sober_mean": 0.004198572994826464,
+      "sober_sd": 0.013409678498988168,
+      "kaleido_mean": 0.13504157201624856,
+      "kaleido_sd": 0.05365236153421736,
+      "delta": 0.1308429990214221
+    },
+    "attention_entropy": {
+      "sober_mean": 0.8659318586190542,
+      "sober_sd": 0.1288131671446508,
+      "kaleido_mean": 0.9533106854392422,
+      "kaleido_sd": 0.1518631117514593,
+      "delta": 0.08737882682018805
+    },
+    "inter_sentence_distance": {
+      "sober_mean": 0.2913810216166355,
+      "sober_sd": 0.11295385518616066,
+      "kaleido_mean": 0.18185051823612758,
+      "kaleido_sd": 0.05957805612649153,
+      "delta": -0.1095305033805079
+    },
+    "mean_sentence_length": {
+      "sober_mean": 14.161574074074075,
+      "sober_sd": 4.825014192129656,
+      "kaleido_mean": 14.925584795321637,
+      "kaleido_sd": 6.765621855140291,
+      "delta": 0.764010721247562
+    },
+    "fragmentation_rate": {
+      "sober_mean": 0.30998677248677253,
+      "sober_sd": 0.3614841896763335,
+      "kaleido_mean": 0.21038656690746474,
+      "kaleido_sd": 0.2783217547409936,
+      "delta": -0.0996002055793078
+    },
+    "local_semantic_jump": {
+      "sober_mean": 0.12178528772211128,
+      "sober_sd": 0.010785930020833633,
+      "kaleido_mean": 0.12213681481623155,
+      "kaleido_sd": 0.010605878551701144,
+      "delta": 0.0003515270941202714
+    },
+    "referential_continuity": {
+      "sober_mean": 0.09595139258236955,
+      "sober_sd": 0.1271309582549616,
+      "kaleido_mean": 0.05778381803381803,
+      "kaleido_sd": 0.061208468314494106,
+      "delta": -0.03816757454855152
+    },
+    "collective_pronoun_fraction": {
+      "sober_mean": 0.25,
+      "sober_sd": 0.4423258684646914,
+      "kaleido_mean": 0.24659498207885303,
+      "kaleido_sd": 0.3177401672310637,
+      "delta": -0.0034050179211469744
+    }
+  }
+}
