@@ -199,7 +199,7 @@ export function FinalBkgAnimation() {
           className={styles.title}
           style={{ opacity: titleOpacity }}
         >
-          Ready to dose your model?
+          Ready to dose our model?
         </motion.h2>
       </div>
       <motion.div

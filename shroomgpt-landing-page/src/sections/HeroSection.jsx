@@ -5,7 +5,7 @@ import styles from "./HeroSection.module.css";
 const line1 = ["TAKE", "YOUR", "AI"];
 const line2 = ["ON", "A", "TRIP."];
 
-const LINE1_STR = "TAKE YOUR AI";
+const LINE1_STR = "TAKE OUR AI";
 const LINE2_STR = "ON A TRIP.";
 
 /* Nested upper semicircles. Larger R = gentler; ARC_Y_FLATTEN <1 = flatter hump. */

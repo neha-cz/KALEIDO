@@ -23,7 +23,7 @@ export const CubeSection = forwardRef(function CubeSection(_props, forwardedRef)
     >
       <div className={styles.sectionIntro}>
         <h2 id="cube-section-heading" className={styles.subtitle}>
-          Steering the model's reasoning.
+        Steering the model's voice from inside.
         </h2>
       </div>
       <div className={styles.sticky}>
@@ -33,8 +33,7 @@ export const CubeSection = forwardRef(function CubeSection(_props, forwardedRef)
           </div>
           <div className={styles.copyColumn}>
             <p className={styles.lede}>
-              Altered-state effects are injected into the model during LLM inference and propagate
-              through the remaining layers.
+            A direction in activation space is added to the residual stream at every decode step, pulling the voice toward ego dissolution at the computational level.
             </p>
             <p className={styles.copyGradient}>
               Every token generated reflects genuine shifts in reasoning.

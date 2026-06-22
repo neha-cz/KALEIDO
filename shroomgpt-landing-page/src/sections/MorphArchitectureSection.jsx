@@ -12,17 +12,17 @@ export function MorphArchitectureSection() {
     >
       <div className={styles.intro}>
         <h2 id="morph-architecture-heading" className={styles.title}>
-          Morphing the model&apos;s architecture.
+        Dreaming through the model's vision.
         </h2>
       </div>
       <div className={styles.body}>
         <div className={styles.splitRow}>
           <div className={styles.copyColumn}>
             <p className={styles.lede}>
-             We use LoRA adapters to fine-tune the model on first-person psychedelic trip reports, distilling the linguistic patterns, associative leaps, and perceptual textures of altered cognition.
+            We gradient-ascend the model's own visual feature geometry to generate dream vectors: surreal representations built directly from how the model sees. At every token, a fresh dream is injected into the residual stream, flooding the language layers with a shifting, churning visual prior.
             </p>
             <p className={styles.copyGradient}>
-             The model learns the cognitive signature of a psychedelic experience through real training data. 
+            The model doesn't describe a hallucination. It reasons through one.
             </p>
           </div>
           <div className={styles.splineWrap}>
