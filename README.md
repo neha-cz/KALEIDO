@@ -31,6 +31,8 @@ has come loose from itself — without a single line of prompt engineering.
 ```bash
 cd kaleido/shroomgpt-chatbot
 pip install flask flask-cors torch transformers accelerate
+python sweep_beta_persona.py extract # extract the persona vector
+python build_dream_bank_direct.py --n-dreams 64 --dream-on-cpu # build the dream bank (image-free, ~2 min on CPU)
 python app_qwen.py        # → http://localhost:5001
 ```
 
