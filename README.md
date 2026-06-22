@@ -2,7 +2,7 @@
 
 KALEIDO is a chat interface that pushes a language model toward a dissolved,
 associative, ego-loosened voice using three composable interventions reached
-down inside the transformer — not prompting tricks, but live edits to the
+down inside the transformer, forming live edits to the
 model's internal computation at inference time. The psychedelic register emerges entirely from activation-space
 manipulation.
 
@@ -38,8 +38,7 @@ python app_qwen.py        # → http://localhost:5001
 
 Requires `qwen_beta_persona.py` (the intervention engine),
 `persona_vectors/qwen_dissolved.pt` (the persona vector), and
-`dream_bank_direct.pt` (the dream bank) in the working directory. See
-[Building the components](#building-the-components) below.
+`dream_bank_direct.pt` (the dream bank) in the working directory. 
 
 ## Results
 
@@ -101,9 +100,7 @@ that landscape is:
 - **Low β** → shallow, merged basins → the model roams between associations
   instead of committing to one.
 
-KALEIDO multiplies β by a fixed ratio on early layers, only during decoding —
-the prompt is encoded at native β so instruction-following lands cleanly.
-The effect is a phase transition, not a ramp: above a critical ratio (~0.35 on
+KALEIDO multiplies β by a fixed ratio on early layers. The effect is a phase transition, not a ramp: above a critical ratio (~0.35 on
 Qwen2-VL-2B) the text is normal; below it, the model snaps to a terse fallback.
 The usable regime sits just above that cliff.
 
@@ -128,16 +125,14 @@ remains grammatical.
 
 ### Dream injection
 
-Rather than feeding dreamed images as input (which produced null internal-state
-shifts in v2/v3 experiments), KALEIDO injects dream-derived visual
-representations directly into the residual stream — a sustained prior over
+KALEIDO injects dream-derived visual representations directly into the residual stream — a sustained prior over
 internal state rather than a stimulus that fades.
 
-The dream bank is built **image-free**: gradient ascent in Qwen2-VL's
+The dream bank is built by gradient ascent in Qwen2-VL's
 patch-embedding space, maximizing a mid vision block's activation along the
 model's own PCA feature directions, then reading the resulting merged visual
 token in LLM space. Each bank vector is the differential (dreamed − baseline),
-unit-normalized. No cherry-picked images; the "surreal content" comes from the
+unit-normalized. The "surreal content" comes from the
 model's visual geometry rather than human taste.
 
 | Property | Value |
@@ -148,7 +143,7 @@ model's visual geometry rather than human taste.
 | Mean pairwise cosine | 0.490 (diverse, not collapsed) |
 | Source images | None |
 
-In **flux** mode, a fresh dream vector is sampled from the bank at every decode
+In flux mode, a fresh dream vector is sampled from the bank at every decode
 step, so the injected visual prior churns during a single reply — the analogue
 of a shifting visual field during a psychedelic experience.
 
@@ -180,21 +175,6 @@ loop-cutter (detects phrase-level semantic repetition), `no_repeat_ngram_size=4`
 and `repetition_penalty=1.15`. Conversation history is capped at the last 2
 turns to prevent the dissolved outputs from feeding back and compounding past
 the coherence threshold.
-
-## Building the components
-
-```bash
-# 1. Extract the persona vector
-python sweep_beta_persona.py extract
-#    → persona_vectors/qwen_dissolved.pt
-
-# 2. Build the dream bank (image-free, ~2 min on CPU)
-python build_dream_bank_direct.py --n-dreams 64 --dream-on-cpu
-#    → dream_bank_direct.pt
-
-# 3. Run the app
-python app_qwen.py
-```
 
 ## Limitations
 
