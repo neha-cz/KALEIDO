@@ -7,30 +7,31 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600&family=Syne:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
   </head>
   <body>
-    <div class="scene-photo" aria-hidden="true"></div>
-    <div class="scene-veil" aria-hidden="true"></div>
-
-    <main class="shell">
-      <header class="glass panel-header panel-header--title-only">
-        <h1 class="panel-title">KALEIDO</h1>
+    <div class="page-bg" aria-hidden="true"></div>
+    <div class="page-art" aria-hidden="true">
+      <img
+        class="page-art-img"
+        src="{{ url_for('static', filename='kaleidoscope-2.png') }}"
+        alt=""
+      />
+    </div>
+    <main class="shell shell--bare shell--idle">
+      <header class="site-header">
+        <a href="{{ landing_url }}" class="site-brand" aria-label="Back to landing page">KALEIDO</a>
       </header>
 
-      <section id="chat" class="glass panel-chat" aria-live="polite">
+      <section id="chat" class="shell-chat" aria-live="polite">
         <div class="messages" id="messages"></div>
-        <p id="empty" class="empty-hint">
-          <span class="empty-hint-text">
-            Ask it anything. The answer comes from somewhere the model wasn't trained to go.
-          </span>
-        </p>
       </section>
 
-      <footer class="glass panel-input">
+      <footer class="shell-input">
+        <p class="shell-caption">Ask it anything. It answers from somewhere else.</p>
         <form id="form" class="input-row" autocomplete="off">
           <label for="user-input" class="visually-hidden">Message</label>
           <div class="input-glass">
@@ -42,8 +43,35 @@
               required
             ></textarea>
           </div>
-          <button type="submit" class="send" id="send" aria-label="Send">
-            <span class="send-text">Send</span>
+          <button type="submit" class="send send--square" id="send" aria-label="Send">
+            <svg
+              class="send-icon"
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 19V5M5 12l7-7 7 7" />
+            </svg>
+            <span class="send-ripple" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="send send--square send--refresh" id="refresh" aria-label="Start new conversation">
+            <svg
+              class="send-icon"
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+              <path d="M18.375 2.625a1 1 0 0 1 1.414 0l2.586 2.586a1 1 0 0 1 0 1.414L12.828 15.828l-4.242 1.414 1.414-4.242z" />
+            </svg>
             <span class="send-ripple" aria-hidden="true"></span>
           </button>
         </form>

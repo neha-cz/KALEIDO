@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>KALEIDO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500&display=swap" rel="stylesheet">
+  <script src="config.js"></script>
+  <script>
+    (function () {
+      var root = document.documentElement;
+
+      function setViewportVars() {
+        try {
+          var vv = window.visualViewport;
+          var winH = window.innerHeight || 0;
+          if (vv) {
+            root.style.setProperty("--vvh", vv.height + "px");
+          } else {
+            root.style.setProperty("--vvh", winH + "px");
+          }
+        } catch (e) {}
+      }
+
+      setViewportVars();
+
+      var raf = 0;
+      function onChange() {
+        if (raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(setViewportVars);
+      }
+
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", onChange);
+        window.visualViewport.addEventListener("scroll", onChange);
+      }
+      window.addEventListener("resize", onChange);
+      window.addEventListener("orientationchange", onChange);
+    })();
+  </script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --text: #f0f0f0;
+      --muted: #aaa;
+      --accent: #e8c84a;
+      --img-w: 1152;
+      --img-h: 2048;
+      --crop: 0.55;
+      --vvh: 100dvh;
+      --side: clamp(1.5rem, 5vw, 3rem);
+    }
+
+    html {
+      background: #000;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      font-weight: 300;
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      background: #000;
+    }
+
+    .page {
+      position: relative;
+      width: 100%;
+      min-height: calc(100vw * var(--img-h) * var(--crop) / var(--img-w));
+      overflow: visible;
+      background: #000 url("fractal-border.jpg") top center / 100% auto no-repeat;
+      padding: 0 var(--side) clamp(3rem, 8vh, 5rem);
+    }
+
+    @media (max-width: 639px) {
+      .page {
+        min-height: calc(100vw * var(--img-h) / var(--img-w));
+        background: #000;
+      }
+
+      .page-bg {
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+
+      .page > :not(.page-bg) {
+        position: relative;
+        z-index: 1;
+      }
+
+      .bg-tile {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        overflow: hidden;
+        line-height: 0;
+      }
+
+      .bg-tile img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: fill;
+      }
+
+      .bg-tile--flip img {
+        transform: scaleY(-1);
+      }
+    }
+
+    @media (min-width: 640px) {
+      .page-bg {
+        display: none;
+      }
+    }
+
+    .intro {
+      position: relative;
+      width: 100%;
+    }
+
+    .hero-stage {
+      position: relative;
+      width: 100%;
+    }
+
+    h1,
+    h2,
+    .feature h2 {
+      font-family: "Source Serif 4", Georgia, serif;
+    }
+
+    .logo {
+      font-family: "Inter", system-ui, sans-serif;
+      padding-top: clamp(1.25rem, 4dvh, 2rem);
+      max-width: 62%;
+      font-size: clamp(1.15rem, 3vw, 1.75rem);
+      font-weight: 400;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .site-footer {
+      max-width: 62%;
+      padding-top: clamp(3rem, 8vh, 5rem);
+      padding-bottom: clamp(1rem, 4dvh, 2rem);
+    }
+
+    .site-nav {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 0.65rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      color: #666;
+    }
+
+    .site-nav a {
+      color: #666;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .site-nav a:hover {
+      color: var(--accent);
+    }
+
+    .site-nav .sep {
+      color: #444;
+    }
+
+    /* Shrinks upward on small screens, drifts to just below center on desktop. */
+    .hero {
+      position: relative;
+      max-width: 50vw;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding-top: clamp(1.5rem, 6dvh, 3rem);
+      transition: padding-top 0.35s ease, transform 0.35s ease;
+    }
+
+    .hero-visual {
+      margin-top: clamp(1.25rem, 3.5vh, 2rem);
+      max-width: 100%;
+      width: min(100%, 480px);
+    }
+
+    .hero-visual img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+      border: 1px solid #2a2a2a;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+    }
+
+    @media (min-width: 640px) {
+      .intro {
+        min-height: var(--vvh, 100dvh);
+      }
+
+      .hero-stage {
+        position: static;
+        min-height: 0;
+      }
+
+      .hero {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        max-width: 62%;
+        padding-top: 0;
+        transform: translateY(calc(-50% + 1rem));
+        transition: top 0.35s ease, transform 0.35s ease;
+      }
+
+      .hero-visual {
+        position: absolute;
+        top: 50%;
+        left: 40vw;
+        right: auto;
+        margin-top: 0;
+        width: clamp(380px, 48vw, 680px);
+        transform: translateY(calc(-50% + 1rem));
+        transition: top 0.35s ease, transform 0.35s ease;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .hero-visual {
+        left: 36vw;
+        width: clamp(440px, 52vw, 760px);
+      }
+    }
+
+    .features {
+      max-width: 50vw;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(2.5rem, 6vh, 4rem);
+      padding-top: clamp(2.5rem, 6vh, 4rem);
+    }
+
+    .feature h2 {
+      font-size: clamp(1.35rem, 3vw, 2rem);
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      text-transform: lowercase;
+      color: var(--text);
+      margin-bottom: 0.75rem;
+    }
+
+    .feature p {
+      font-size: clamp(0.9rem, 1.8vw, 1rem);
+      color: var(--muted);
+      max-width: 100%;
+      line-height: 1.7;
+    }
+
+    h1 {
+      font-size: clamp(1.8rem, 5vw, 3.2rem);
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      max-width: 16ch;
+      margin-bottom: 1rem;
+    }
+
+    .tagline {
+      font-size: clamp(0.95rem, 2vw, 1.1rem);
+      color: var(--muted);
+      max-width: 34ch;
+      margin-bottom: 1.5rem;
+    }
+
+    .cta {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 400;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--text);
+      border: 1px solid #444;
+      padding: 0.7rem 0.85rem;
+      text-align: center;
+      width: fit-content;
+      min-width: 4.5rem;
+      transition: border-color 0.2s ease, color 0.2s ease;
+      cursor: pointer;
+    }
+
+    .cta:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .cta:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 4px;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .logo,
+      .hero > *,
+      .hero-visual,
+      .feature,
+      .site-footer {
+        animation: fade-up 0.8s ease both;
+      }
+
+      @media (min-width: 640px) {
+        .hero-visual {
+          animation: fade-in 0.8s ease both;
+        }
+      }
+
+      .feature:nth-child(2) { animation-delay: 0.1s; }
+      .feature:nth-child(3) { animation-delay: 0.2s; }
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes fade-up {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="page-bg" aria-hidden="true"></div>
+
+    <div class="intro">
+      <p class="logo">KALEIDO</p>
+
+      <div class="hero-stage">
+        <div class="hero">
+          <h1>perturbing the<br>activation space</h1>
+          <p class="tagline">
+            we did not prompt the model to talk like this.
+          </p>
+          <a href="/chat" class="cta" id="enter-cta">Enter</a>
+        </div>
+
+        <figure class="hero-visual">
+          <img src="best-ss-ever-landing-page.png" alt="KALEIDO chat interface preview">
+        </figure>
+      </div>
+    </div>
+
+    <section class="features">
+      <article class="feature">
+        <h2>β-flatten</h2>
+        <p>
+          Loosely inspired by the Entropic Brain Hypothesis and REBUS, we lower the inverse
+          temperature inside the attention mechanism, shallowing its Hopfield network energy landscape
+          so the model drifts between patterns instead of committing to one.
+        </p>
+      </article>
+
+      <article class="feature">
+        <h2>Persona steer</h2>
+        <p>
+          Implementing Anthropic's method of persona vectors, we learn a direction in
+          activation space that encodes ego dissolution and add it to the residual
+          stream at every decode step, pulling the model's voice from inside, not
+          from above.
+        </p>
+      </article>
+
+      <article class="feature">
+        <h2>Dream inject</h2>
+        <p>
+          Inspired by Google's DeepDream, we gradient-ascend the model's own visual
+          feature geometry to generate surreal vectors, then inject them into the
+          residual stream at every token, flooding language with a churning visual
+          prior.
+        </p>
+      </article>
+    </section>
+
+    <footer class="site-footer">
+      <nav class="site-nav" aria-label="Site">
+        <span>&copy; 2026</span>
+        <span class="sep" aria-hidden="true">|</span>
+        <a href="methods/">methods</a>
+        <span class="sep" aria-hidden="true">|</span>
+        <a href="https://x.com/neha_cz">twitter</a>
+        <span class="sep" aria-hidden="true">|</span>
+        <a href="www.linkedin.com/in/nehachandran18">linkedin</a>
+        <span class="sep" aria-hidden="true">|</span>
+        <a href="https://nehacz.substack.com/">substack</a>
+      </nav>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      var enter = document.getElementById("enter-cta");
+      if (!enter) return;
+
+      var cfg = window.KALEIDO_CONFIG || {};
+      var chatUrl = cfg.chatUrl || "/chat";
+      var host = location.hostname;
+      var isLocal = host === "localhost" || host === "127.0.0.1" || !host;
+      var isPlaceholder = /YOUR-USERNAME/i.test(chatUrl);
+
+      if (isLocal && (isPlaceholder || chatUrl.startsWith("/"))) {
+        enter.href = "http://" + (host || "localhost") + ":5001/chat";
+        return;
+      }
+
+      enter.href = chatUrl;
+    })();
+  </script>
+  <script>
+    (function () {
+      var mq = window.matchMedia("(max-width: 639px)");
+      var page, strip, ro;
+
+      var IMG_W = 1152;
+      var IMG_H = 2048;
+
+      function tileHeight() {
+        return strip.clientWidth * (IMG_H / IMG_W);
+      }
+
+      function rebuild() {
+        if (!page || !strip) return;
+
+        if (!mq.matches) {
+          strip.innerHTML = "";
+          strip.style.height = "";
+          return;
+        }
+
+        var h = tileHeight();
+        if (!h) return;
+
+        var pageH = Math.max(page.scrollHeight, page.offsetHeight);
+        var count = Math.max(1, Math.ceil(pageH / h));
+
+        strip.innerHTML = "";
+        strip.style.height = pageH + "px";
+
+        for (var i = 0; i < count; i++) {
+          var tile = document.createElement("div");
+          tile.className = "bg-tile" + (i % 2 === 1 ? " bg-tile--flip" : "");
+          tile.style.top = i * h + "px";
+          tile.style.height = h + "px";
+
+          var img = document.createElement("img");
+          img.src = "fractal-border.jpg";
+          img.alt = "";
+          img.decoding = "async";
+          img.setAttribute("aria-hidden", "true");
+          tile.appendChild(img);
+
+          strip.appendChild(tile);
+        }
+      }
+
+      function init() {
+        page = document.querySelector(".page");
+        strip = document.querySelector(".page-bg");
+        if (!page || !strip) return;
+
+        ro = new ResizeObserver(function () {
+          requestAnimationFrame(rebuild);
+        });
+        ro.observe(page);
+
+        mq.addEventListener("change", rebuild);
+        window.addEventListener("resize", rebuild);
+        window.addEventListener("load", rebuild);
+
+        var heroImg = document.querySelector(".hero-visual img");
+        if (heroImg) {
+          if (heroImg.complete) {
+            requestAnimationFrame(rebuild);
+          } else {
+            heroImg.addEventListener("load", rebuild);
+          }
+        }
+
+        rebuild();
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -20,6 +20,24 @@ function getFontSize(style) {
   return Number.isFinite(n) ? n : 16;
 }
 
+function getWrapWidth(el, isBubble) {
+  const style = window.getComputedStyle(el);
+  const padX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+  const borderX = parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth);
+
+  if (isBubble && el.parentElement) {
+    const parentWidth = el.parentElement.clientWidth;
+    if (parentWidth > 0) {
+      // Always break lines against the max bubble width — not the bubble's
+      // current (often too-narrow) shrink-wrapped size at measure time.
+      return Math.max(80, Math.floor(parentWidth * 0.9 - padX - borderX) - 4);
+    }
+  }
+
+  const contentWidth = el.clientWidth - padX;
+  return Math.max(80, Math.floor(contentWidth) - 4);
+}
+
 function warpElement(el) {
   if (!(el instanceof HTMLElement)) return;
 
@@ -32,13 +50,11 @@ function warpElement(el) {
   const letterSpacing = Number.parseFloat(style.letterSpacing);
   const fontSize = getFontSize(style);
   const lineHeight = getLineHeight(style, fontSize);
-  let width = Math.max(
-    80,
-    Math.floor(el.getBoundingClientRect().width || el.clientWidth || 280) - 2
-  );
+  const isBubble = el.classList.contains("bubble");
+  let width = getWrapWidth(el, isBubble);
 
   // Keep single-token headings (e.g. "ShroomGPT") from splitting into odd wraps.
-  if (!/\s/.test(raw)) {
+  if (!isBubble && !/\s/.test(raw)) {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     if (ctx) {
@@ -50,14 +66,13 @@ function warpElement(el) {
 
   let lines = [];
   const forceSingleLine = el.matches(".brand h1");
-  const isBubble = el.classList.contains("bubble");
   if (forceSingleLine) {
     lines = [raw];
   } else {
     try {
       const prepared = prepareWithSegments(raw, font, {
         whiteSpace: "pre-wrap",
-        wordBreak: isBubble ? "keep-all" : "normal",
+        wordBreak: "normal",
         letterSpacing: Number.isFinite(letterSpacing) ? letterSpacing : undefined,
       });
       let cursor = { segmentIndex: 0, graphemeIndex: 0 };
@@ -204,7 +219,12 @@ function initWarping() {
         record.addedNodes.forEach((node) => {
           if (!(node instanceof HTMLElement)) return;
           if (node.classList.contains("bubble")) {
-            warpElement(node);
+            requestAnimationFrame(() => warpElement(node));
+            return;
+          }
+          if (node.classList.contains("message-group")) {
+            const bubble = node.querySelector(".bubble");
+            if (bubble) requestAnimationFrame(() => warpElement(bubble));
           }
         });
       });
@@ -222,46 +242,6 @@ function initWarping() {
   });
 }
 
-function initCursorMushroom() {
-  if (window.matchMedia("(pointer: coarse)").matches) return;
-
-  const icon = document.createElement("img");
-  icon.id = "cursor-mushroom";
-  icon.src = "/mushroom.png";
-  icon.alt = "";
-  icon.setAttribute("aria-hidden", "true");
-  document.body.appendChild(icon);
-
-  let targetX = -999;
-  let targetY = -999;
-  let x = targetX;
-  let y = targetY;
-  let visible = false;
-
-  const animate = () => {
-    x += (targetX - x) * 0.15;
-    y += (targetY - y) * 0.15;
-    icon.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-    window.requestAnimationFrame(animate);
-  };
-  window.requestAnimationFrame(animate);
-
-  window.addEventListener("mousemove", (event) => {
-    targetX = event.clientX + 14;
-    targetY = event.clientY + 16;
-    if (!visible) {
-      visible = true;
-      icon.style.opacity = "0.92";
-    }
-  });
-
-  window.addEventListener("mouseleave", () => {
-    visible = false;
-    icon.style.opacity = "0";
-  });
-}
-
 window.addEventListener("DOMContentLoaded", () => {
   initWarping();
-  initCursorMushroom();
 });

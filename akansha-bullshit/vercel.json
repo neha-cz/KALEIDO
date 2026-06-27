@@ -1,0 +1,12 @@
+{
+  "buildCommand": "node scripts/generate-config.mjs",
+  "installCommand": "echo \"no install\"",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    }
+  ]
+}

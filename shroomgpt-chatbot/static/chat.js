@@ -1,5 +1,6 @@
 (function () {
   const messagesEl = document.getElementById("messages");
+  const chatEl = document.getElementById("chat");
   const form = document.getElementById("form");
   const input = document.getElementById("user-input");
   const sendBtn = document.getElementById("send");
@@ -21,7 +22,22 @@
   let tripActive = false;
 
   function scrollBottom() {
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+    const scrollEl = chatEl || messagesEl;
+    if (!scrollEl) return;
+    scrollEl.scrollTop = scrollEl.scrollHeight;
+  }
+
+  function scheduleScrollBottom() {
+    scrollBottom();
+    requestAnimationFrame(() => {
+      scrollBottom();
+      requestAnimationFrame(scrollBottom);
+    });
+  }
+
+  if (messagesEl) {
+    const resizeObserver = new ResizeObserver(() => scrollBottom());
+    resizeObserver.observe(messagesEl);
   }
 
   function addBubble(text, role, extraClass) {
@@ -30,7 +46,7 @@
     el.className = "bubble " + role + (extraClass ? " " + extraClass : "");
     el.textContent = text;
     messagesEl.appendChild(el);
-    scrollBottom();
+    scheduleScrollBottom();
     return el;
   }
 

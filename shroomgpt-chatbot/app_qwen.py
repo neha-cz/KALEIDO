@@ -30,6 +30,8 @@ Environment variables
   HF_MODEL          (default: Qwen/Qwen2-VL-2B-Instruct)
   DEVICE            (default: auto)
   PORT              (default: 5001)
+  CHAT_ONLY         (default: 0)      redirect / → /chat; skip serving landing
+  LANDING_URL       (default: /)      URL for the KALEIDO link in chat UI
   TRIP_DEBUG        (default: 0)
   DEMO_BETA_RATIO   (default: 0.45) β ratio for demo layers
   DEMO_LAYERS       (default: 2,3)
@@ -47,7 +49,7 @@ import os
 import threading
 
 import torch
-from flask import Flask, jsonify, render_template, request, send_from_directory
+from flask import Flask, jsonify, redirect, render_template, request, send_from_directory
 from flask_cors import CORS
 from transformers import AutoModelForImageTextToText, AutoTokenizer
 
@@ -72,6 +74,8 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})
 # Config
 # ============================================================
 HF_MODEL = os.environ.get("HF_MODEL", "Qwen/Qwen2-VL-2B-Instruct")
+LANDING_URL = os.environ.get("LANDING_URL", "/")
+CHAT_ONLY = os.environ.get("CHAT_ONLY", "0") == "1"
 TRIP_DEBUG = os.environ.get("TRIP_DEBUG", "0") == "1"
 APPLY_BETA_ON_PREFILL = os.environ.get("APPLY_BETA_ON_PREFILL", "0") == "1"
 
@@ -480,10 +484,58 @@ def _per_layer_temperature() -> list:
 # ============================================================
 # Routes (PRESERVED — same surface as the original app)
 # ============================================================
-@app.route("/")
-def index():
+LANDING_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "akansha-bullshit")
+)
+_LANDING_ROOT_FILES = ("fractal-border.jpg", "best-ss-ever-landing-page.png")
+
+
+def _render_chat():
     return render_template(
-        "index_fixed_beta.html", model=HF_MODEL, ollama_url=f"local:{DEVICE}"
+        "index_fixed_beta.html",
+        model=HF_MODEL,
+        ollama_url=f"local:{DEVICE}",
+        landing_url=LANDING_URL,
+    )
+
+
+@app.route("/")
+def landing():
+    landing_index = os.path.join(LANDING_DIR, "index.html")
+    if not CHAT_ONLY and os.path.isfile(landing_index):
+        return send_from_directory(LANDING_DIR, "index.html")
+    return redirect("/chat")
+
+
+@app.route("/chat")
+def chat_ui():
+    return _render_chat()
+
+
+@app.route("/methods/")
+@app.route("/methods/<path:subpath>")
+def landing_methods(subpath="index.html"):
+    if not subpath or subpath.endswith("/"):
+        subpath = "index.html"
+    methods_dir = os.path.join(LANDING_DIR, "methods")
+    path = os.path.join(methods_dir, subpath)
+    if os.path.isfile(path):
+        return send_from_directory(methods_dir, subpath)
+    return jsonify({"error": "not found"}), 404
+
+
+def _landing_root_asset(filename: str):
+    path = os.path.join(LANDING_DIR, filename)
+    if os.path.isfile(path):
+        return send_from_directory(LANDING_DIR, filename)
+    return jsonify({"error": "not found"}), 404
+
+
+for _landing_file in _LANDING_ROOT_FILES:
+    app.add_url_rule(
+        f"/{_landing_file}",
+        f"landing_{_landing_file.replace('.', '_')}",
+        lambda f=_landing_file: _landing_root_asset(f),
     )
 
 

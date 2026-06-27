@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Methods — KALEIDO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500&display=swap" rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --text: #f0f0f0;
+      --muted: #aaa;
+      --accent: #e8c84a;
+      --side: clamp(1.5rem, 5vw, 3rem);
+      --content: 75vw;
+    }
+
+    html {
+      background: #000;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      font-weight: 300;
+      color: var(--text);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      background: #000;
+    }
+
+    .page {
+      min-height: 100dvh;
+      background: #000;
+      padding: 0 var(--side) clamp(4rem, 10vh, 6rem);
+    }
+
+    .top {
+      padding-top: clamp(1.25rem, 4dvh, 2rem);
+      margin-bottom: clamp(2.5rem, 6vh, 4rem);
+      max-width: 75vw;
+    }
+
+    .logo {
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: clamp(1.15rem, 3vw, 1.75rem);
+      font-weight: 400;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .logo:hover {
+      color: var(--text);
+    }
+
+    .site-footer {
+      max-width: 75vw;
+      padding-top: clamp(3rem, 8vh, 5rem);
+      padding-bottom: clamp(1rem, 4dvh, 2rem);
+    }
+
+    .site-nav {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 0.65rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      color: #666;
+    }
+
+    .site-nav a {
+      color: #666;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .site-nav a:hover {
+      color: var(--accent);
+    }
+
+    .site-nav .sep {
+      color: #444;
+    }
+
+    .prose {
+      max-width: var(--content);
+    }
+
+    .prose :is(h1, h2, h3, h4) {
+      font-family: "Source Serif 4", Georgia, serif;
+      font-weight: 400;
+      color: var(--text);
+      line-height: 1.25;
+    }
+
+    .prose h1 {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .prose h2 {
+      font-size: clamp(1.35rem, 3vw, 1.85rem);
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .prose h3 {
+      font-size: clamp(1.1rem, 2.2vw, 1.35rem);
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      color: var(--muted);
+    }
+
+    .prose p,
+    .prose li {
+      font-size: clamp(0.9rem, 1.8vw, 1rem);
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .prose strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .prose a {
+      color: var(--text);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .prose a:hover {
+      color: var(--accent);
+    }
+
+    .prose ol,
+    .prose ul {
+      padding-left: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .prose li {
+      margin-bottom: 0.5rem;
+    }
+
+    .prose hr {
+      border: none;
+      border-top: 1px solid #333;
+      margin: 2.5rem 0;
+    }
+
+    .prose img {
+      max-width: 100%;
+      height: auto;
+      margin: 1.5rem 0;
+      border: 1px solid #333;
+    }
+
+    .prose pre {
+      background: #111;
+      border: 1px solid #333;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 1.25rem 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    .prose code {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 0.88em;
+    }
+
+    .prose :not(pre) > code {
+      background: #111;
+      padding: 0.15em 0.4em;
+      border: 1px solid #2a2a2a;
+    }
+
+    .prose table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.25rem 0 1.5rem;
+      font-size: 0.85rem;
+      display: block;
+      overflow-x: auto;
+    }
+
+    .prose th,
+    .prose td {
+      border: 1px solid #333;
+      padding: 0.55rem 0.75rem;
+      text-align: left;
+      color: var(--muted);
+    }
+
+    .prose th {
+      color: var(--text);
+      font-weight: 500;
+      background: #0a0a0a;
+    }
+
+    .prose td strong {
+      color: var(--text);
+    }
+
+    .loading,
+    .error {
+      max-width: var(--content);
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .error {
+      color: #c96;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="top">
+      <a href="../" class="logo">KALEIDO</a>
+    </header>
+
+    <main id="content" class="prose">
+      <p class="loading">Loading…</p>
+    </main>
+
+    <footer class="site-footer">
+      <nav class="site-nav" aria-label="Site">
+        <span>&copy; 2026</span>
+        <span class="sep" aria-hidden="true">|</span>
+        <a href="./">methods</a>
+        <span class="sep" aria-hidden="true">|</span>
+        <a href="#">twitter</a>
+        <span class="sep" aria-hidden="true">|</span>
+        <a href="#">linkedin</a>
+        <span class="sep" aria-hidden="true">|</span>
+        <a href="#">substack</a>
+      </nav>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    marked.setOptions({
+      gfm: true,
+      breaks: false,
+    });
+
+    fetch("../README_kaleido_updated.md")
+      .then(function (res) {
+        if (!res.ok) throw new Error("Could not load README (" + res.status + ")");
+        return res.text();
+      })
+      .then(function (md) {
+        md = md.replace(/\]\((?!https?:\/\/)([^)]+)\)/g, "](../$1)");
+        document.getElementById("content").innerHTML = marked.parse(md);
+      })
+      .catch(function (err) {
+        document.getElementById("content").innerHTML =
+          '<p class="error">' + err.message + "</p>";
+      });
+  </script>
+</body>
+</html>
