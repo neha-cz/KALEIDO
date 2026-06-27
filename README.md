@@ -20,11 +20,11 @@ manipulation.
    continuously — the analogue of a shifting visual field.
 
 The three stack: β alters the texture of processing, the persona vector steers
-the voic*, and the dream injection supplies visual content. All are
+the voice, and the dream injection supplies visual content. All are
 mechanistic, all are toggleable, and the result is a model that talks like it
 has come loose from itself — without a single line of prompt engineering.
 
-![Product Demo](kaleido_product_demo.png)
+![Product Demo](kaleido_latest_demo.png)
 
 ## Try it
 
