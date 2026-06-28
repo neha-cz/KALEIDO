@@ -79,7 +79,7 @@
       width: 100%;
       min-height: calc(100vw * var(--img-h) * var(--crop) / var(--img-w));
       overflow: visible;
-      background: #000 url("fractal-border.jpg") top center / 100% auto no-repeat;
+      background: #000 url("fractal-border-3.png") top center / 100% auto no-repeat;
       padding: 0 var(--side) clamp(3rem, 8vh, 5rem);
     }
 
@@ -488,7 +488,7 @@
           tile.style.height = h + "px";
 
           var img = document.createElement("img");
-          img.src = "fractal-border.jpg";
+          img.src = "fractal-border-3.png";
           img.alt = "";
           img.decoding = "async";
           img.setAttribute("aria-hidden", "true");
